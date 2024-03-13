@@ -10,33 +10,16 @@ orderly2::orderly_run("severity_parsed_data")
 ## 2. severity_parameters 
 orderly2::orderly_run("severity_parameters", 
                       parameters = list(deterministic = TRUE,
-                                        data_changed = "deaths_comm",
-                                        change_rate=0.9))
+                                        data_changed = "icu",
+                                        change_rate = 1))
 
 ## ---------------------------
 ## Run in the cluster
 ## ---------------------------
 
-## 1. Context ----
-setwd(orderly2:::orderly_src_root(NULL, TRUE))
-packages <- c("sircovid", "lubridate", "coda", "tidyr", "ggplot2",
-              "viridisLite", "orderly2", 'vaultr', 'readxl', "ggtext",
-              'abind', 'here', "mcstate", "dust", "spimalot", "purrr",
-              "stringr", "ggrepel", "naniar", "desplot", "rmarkdown",
-              "jtools", "DescTools", "car", "data.table", "reshape2",
-              "gridExtra", "ggpubr", "gdata", "philentropy","png",
-              "gtable","grid","scales","forestploter","ragg")
-src <- conan::conan_sources(NULL,
-                            repos = c("https://ncov-ic.r-universe.dev",
-                                      "https://mrc-ide.r-universe.dev"))
-ctx <- context::context_save("contexts",
-                             packages = packages,
-                             package_sources = src)
-cfg <- didehpc::didehpc_config(cluster = "wpia-hn",
-                               template = 'AllNodes',
-                               cores = 8)
-obj <- didehpc::queue_didehpc(ctx, config = cfg)
-
+## 1. Basic cluster setup
+hipercow::hipercow_init(driver = "windows")
+hipercow::hipercow_provision()
 
 regions <- sircovid::regions("england")
 
@@ -44,59 +27,102 @@ regions <- sircovid::regions("england")
 
 ## 2. Short runs ----
 fits <- 
-  obj$lapply(X = regions,
-             FUN = function(x) {
-               orderly2::orderly_run('severity_fits',
-                                     parameters = list(region = x,
-                                                       short_run = TRUE,
-                                                       deterministic = TRUE,
-                                                       data_changed = "icu",
-                                                       change_rate = 1))})
+  hipercow::task_create_bulk_call(
+    function(x) {
+      orderly2::orderly_run('severity_fits',
+                            parameters = list(region = x,
+                                              short_run = TRUE,
+                                              deterministic = TRUE,
+                                              data_changed = "icu",
+                                              change_rate = 1))},
+    regions,
+    resources = hipercow::hipercow_resources(queue = 'AllNodes',
+                                             cores = 8))
 batch <- fits$name
 
 ## Collect results
-res <- obj$task_bundle_get(batch)$results()
+res <- hipercow::hipercow_bundle_result(batch)
 
 # Combined
-combined <- obj$enqueue(orderly2::orderly_run('severity_fits_combined',
-                                              parameters = list(short_run = TRUE,
-                                                                deterministic = TRUE,
-                                                                data_changed = "original",
-                                                                change_rate = 1)))
-combined_result <- combined$result()
+combined <- hipercow::task_create_expr(
+  orderly2::orderly_run('severity_fits_combined',
+                        parameters = list(short_run = TRUE,
+                                          deterministic = TRUE,
+                                          data_changed = "icu",
+                                          change_rate = 1)),
+  resources = hipercow::hipercow_resources(queue = 'AllNodes',
+                                           cores = 8)
+)
+combined_result <- hipercow::task_result(combined)
+
+# Comparison
+comparison <- hipercow::task_create_expr(
+  orderly2::orderly_run('severity_fits_comparison',
+                        parameters = list(short_run = TRUE,
+                                          deterministic = TRUE)),
+  resources = hipercow::hipercow_resources(queue = 'AllNodes',
+                                           cores = 8)
+)
+comparison_result <- hipercow::task_result(comparison)
+
+# Comparison2
+comparison2 <- hipercow::task_create_expr(
+  orderly2::orderly_run('severity_fits_comparison2',
+                        parameters = list(short_run = TRUE,
+                                          deterministic = TRUE)),
+  resources = hipercow::hipercow_resources(queue = 'AllNodes',
+                                           cores = 8)
+)
+comparison_result <- hipercow::task_result(comparison2)
 
 #----
 
 ## 3. Long runs ----
 fits <- 
-  obj$lapply(X = c("north_east_and_yorksire"),
-             FUN = function(x) {
-               orderly2::orderly_run('severity_fits',
-                                     parameters = list(region = x,
-                                                       short_run = FALSE,
-                                                       deterministic = TRUE,
-                                                       data_changed = "deaths_comm",
-                                                       change_rate = 0.9))})
+  hipercow::task_create_bulk_call(
+    function(x) {
+      orderly2::orderly_run('severity_fits',
+                            parameters = list(region = x,
+                                              short_run = FALSE,
+                                              deterministic = TRUE,
+                                              data_changed = "icu",
+                                              change_rate = 1))},
+    regions,
+    resources = hipercow::hipercow_resources(queue = 'AllNodes',
+                                             cores = 8))
 batch <- fits$name
 
 ## Collect results
-res <- obj$task_bundle_get(batch)$results()
+res <- hipercow::hipercow_bundle_result(batch)
 
 # Combined
-combined <- obj$enqueue(orderly2::orderly_run('severity_fits_combined',
-                                              parameters = list(short_run = FALSE,
-                                                                deterministic = TRUE,
-                                                                data_changed = "deaths_comm",
-                                                                change_rate = 0.9)))
-combined_result <- combined$result()
+combined <- hipercow::task_create_expr(
+  orderly2::orderly_run('severity_fits_combined',
+                        parameters = list(short_run = FALSE,
+                                          deterministic = TRUE,
+                                          data_changed = "icu",
+                                          change_rate = 1)),
+  resources = hipercow::hipercow_resources(queue = 'AllNodes',
+                                           cores = 8)
+)
+combined_result <- hipercow::task_result(combined)
 
 #comparison
-comparison <- obj$enqueue(orderly2::orderly_run('severity_fits_comparison',
-                                                parameters = list(short_run = FALSE,
-                                                                  deterministic = TRUE)))
+comparison <- hipercow::task_create_expr(
+  orderly2::orderly_run('severity_fits_comparison',
+                        parameters = list(short_run = FALSE,
+                                          deterministic = TRUE)),
+  resources = hipercow::hipercow_resources(queue = 'AllNodes',
+                                           cores = 8)
+)
+comparison_result <- hipercow::task_result(comparison)
 
-comparison_result <- comparison$result()
-
-comparison2 <- obj$enqueue(orderly2::orderly_run('severity_fits_comparison2',
-                                                parameters = list(short_run = FALSE,
-                                                                  deterministic = TRUE)))
+#comparison2
+comparison2 <- hipercow::task_create_expr(
+  orderly2::orderly_run('severity_fits_comparison2',
+                        parameters = list(short_run = FALSE,
+                                          deterministic = TRUE)),
+  resources = hipercow::hipercow_resources(queue = 'AllNodes',
+                                           cores = 8)
+)
+comparison_result <- hipercow::task_result(comparison2)

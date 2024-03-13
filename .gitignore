@@ -7,6 +7,7 @@ archive
 # ---^^^--- added by orderly ---^^^----------------
 .Rproj.user
 contexts
+hipercow
 .Rhistory
 slides/*_files
 *.html
