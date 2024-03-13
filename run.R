@@ -26,7 +26,7 @@ for (r in sircovid::regions("england")) {
                       short_run = short_run,
                       deterministic = deterministic,
                       data_changed = data_changed,
-                      change_rate=change_rate))
+                      change_rate = change_rate))
 }
 
 
@@ -36,7 +36,7 @@ orderly2::orderly_run(
   parameters = list(short_run = short_run,
                     deterministic = deterministic,
                     data_changed = data_changed,
-                    change_rate=change_rate))
+                    change_rate = change_rate))
 
 ## 5. severity_fits_comparison
 orderly2::orderly_run(

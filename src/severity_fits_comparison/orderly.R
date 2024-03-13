@@ -20,186 +20,27 @@ library(ragg)
 
 #dependency====
 
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "original" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/original/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/original/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/original/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/original/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/original/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/original/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/original/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/original/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/original/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/original/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/original/england_R0.rds"="outputs/R0.rds",
-    "inputs/original/england/fit.rds"="outputs/england_severity.rds"))
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "deaths_hosp" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/deaths_hosp/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/deaths_hosp/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/deaths_hosp/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/deaths_hosp/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/deaths_hosp/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/deaths_hosp/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/deaths_hosp/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/deaths_hosp/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/deaths_hosp/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/deaths_hosp/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/deaths_hosp/england_R0.rds"="outputs/R0.rds",
-    "inputs/deaths_hosp/england/fit.rds"="outputs/england_severity.rds"))
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "deaths_comm" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/deaths_comm/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/deaths_comm/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/deaths_comm/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/deaths_comm/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/deaths_comm/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/deaths_comm/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/deaths_comm/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/deaths_comm/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/deaths_comm/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/deaths_comm/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/deaths_comm/england_R0.rds"="outputs/R0.rds",
-    "inputs/deaths_comm/england/fit.rds"="outputs/england_severity.rds"))
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "icu" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/icu/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/icu/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/icu/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/icu/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/icu/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/icu/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/icu/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/icu/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/icu/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/icu/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/icu/england_R0.rds"="outputs/R0.rds",
-    "inputs/icu/england/fit.rds"="outputs/england_severity.rds"))
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "general" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/general/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/general/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/general/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/general/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/general/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/general/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/general/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/general/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/general/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/general/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/general/england_R0.rds"="outputs/R0.rds",
-    "inputs/general/england/fit.rds"="outputs/england_severity.rds"))
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "hosp" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/hosp/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/hosp/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/hosp/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/hosp/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/hosp/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/hosp/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/hosp/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/hosp/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/hosp/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/hosp/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/hosp/england_R0.rds"="outputs/R0.rds",
-    "inputs/hosp/england/fit.rds"="outputs/england_severity.rds"))
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "all_admission" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/all_admission/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/all_admission/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/all_admission/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/all_admission/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/all_admission/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/all_admission/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/all_admission/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/all_admission/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/all_admission/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/all_admission/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/all_admission/england_R0.rds"="outputs/R0.rds",
-    "inputs/all_admission/england/fit.rds"="outputs/england_severity.rds"))
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "pillar2" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/pillar2/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/pillar2/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/pillar2/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/pillar2/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/pillar2/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/pillar2/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/pillar2/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/pillar2/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/pillar2/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/pillar2/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/pillar2/england_R0.rds"="outputs/R0.rds",
-    "inputs/pillar2/england/fit.rds"="outputs/england_severity.rds"))
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "ons" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/ons/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/ons/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/ons/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/ons/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/ons/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/ons/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/ons/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/ons/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/ons/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/ons/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/ons/england_R0.rds"="outputs/R0.rds",
-    "inputs/ons/england/fit.rds"="outputs/england_severity.rds"))
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "react" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/react/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/react/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/react/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/react/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/react/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/react/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/react/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/react/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/react/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/react/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/react/england_R0.rds"="outputs/R0.rds",
-    "inputs/react/england/fit.rds"="outputs/england_severity.rds"))
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "strain" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/strain/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/strain/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/strain/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/strain/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/strain/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/strain/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/strain/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/strain/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/strain/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/strain/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/strain/england_R0.rds"="outputs/R0.rds",
-    "inputs/strain/england/fit.rds"="outputs/england_severity.rds"))
-orderly2::orderly_dependency(
-  "severity_fits_combined",
-  'latest(parameter:data_changed == "sero" && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate==1)',
-  c("inputs/sero/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
-    "inputs/sero/london/fit.rds" = "regional_results/london/fit.rds",
-    "inputs/sero/midlands/fit.rds" = "regional_results/midlands/fit.rds",
-    "inputs/sero/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
-    "inputs/sero/north_west/fit.rds" = "regional_results/north_west/fit.rds",
-    "inputs/sero/south_east/fit.rds" = "regional_results/south_east/fit.rds",
-    "inputs/sero/south_west/fit.rds" = "regional_results/south_west/fit.rds",
-    "inputs/sero/Rt_england.rds"="regional_results/Rt_england.rds",
-    "inputs/sero/diagnostics.rds"="outputs/diagnostics.rds",
-    "inputs/sero/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
-    "inputs/sero/england_R0.rds"="outputs/R0.rds",
-    "inputs/sero/england/fit.rds"="outputs/england_severity.rds"))
+data_changed <- c("original", "deaths_hosp", "deaths_comm", "icu", "general",
+                  "hosp", "all_admission", "pillar2", "ons", "react", "strain",
+                  "sero")
+
+for (d in data_changed) {
+  orderly2::orderly_dependency(
+    "severity_fits_combined",
+    quote(latest(parameter:data_changed == environment:d && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate == 1)),
+    c("inputs/${d}/east_of_england/fit.rds" = "regional_results/east_of_england/fit.rds",
+      "inputs/${d}/london/fit.rds" = "regional_results/london/fit.rds",
+      "inputs/${d}/midlands/fit.rds" = "regional_results/midlands/fit.rds",
+      "inputs/${d}/north_east_and_yorkshire/fit.rds" = "regional_results/north_east_and_yorkshire/fit.rds",
+      "inputs/${d}/north_west/fit.rds" = "regional_results/north_west/fit.rds",
+      "inputs/${d}/south_east/fit.rds" = "regional_results/south_east/fit.rds",
+      "inputs/${d}/south_west/fit.rds" = "regional_results/south_west/fit.rds",
+      "inputs/${d}/Rt_england.rds"="regional_results/Rt_england.rds",
+      "inputs/${d}/diagnostics.rds"="outputs/diagnostics.rds",
+      "inputs/${d}/england_intrinsic_severity.rds"="outputs/england_intrinsic_severity.rds",
+      "inputs/${d}/england_R0.rds"="outputs/R0.rds",
+      "inputs/${d}/england/fit.rds"="outputs/england_severity.rds"))
+}
 
 #artefact====
 
@@ -690,7 +531,7 @@ for (r in c(regions,"england")){
           
           X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
           #X<-rbind(reference$y/sum(reference$y),changed$y/sum(changed$y))
-          KL<-philentropy::KL(X)
+          KL<-suppressMessages(philentropy::KL(X))
         }
         KL_ifr_continuous[[r]][dataOff,i] <- KL
       }
@@ -751,7 +592,7 @@ for (r in c(regions,"england")){
         
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
         #X<-rbind(reference$y/sum(reference$y),changed$y/sum(changed$y))
-        KL<-philentropy::KL(X)
+        KL<-suppressMessages(philentropy::KL(X))
         }
         KL_ihr_continuous[[r]][dataOff,i] <- KL
       }
@@ -812,7 +653,7 @@ for (r in c(regions,"england")){
         
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
         #X<-rbind(reference$y/sum(reference$y),changed$y/sum(changed$y))
-        KL<-philentropy::KL(X)
+        KL<-suppressMessages(philentropy::KL(X))
         }
         KL_hfr_continuous[[r]][dataOff,i] <- KL
       }
@@ -873,7 +714,7 @@ for (r in c(regions,"england")){
         
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
         #X<-rbind(reference$y/sum(reference$y),changed$y/sum(changed$y))
-        KL<-philentropy::KL(X)
+        KL<-suppressMessages(philentropy::KL(X))
         }
         KL_Rt_eff[[r]][dataOff,i] <- KL
       }
@@ -950,7 +791,7 @@ for (r in c(regions,"england")){
         
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
         #X<-rbind(reference$y/sum(reference$y),changed$y/sum(changed$y))
-        KL<-philentropy::KL(X)
+        KL<-suppressMessages(philentropy::KL(X))
         
         KL_IFR[[r]][dataOff,i] <- KL
         
@@ -1026,7 +867,7 @@ for (r in c(regions,"england")){
         changed_interp[is.na(changed_interp)] <- 0
         
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
-        KL<-philentropy::KL(X)
+        KL<-suppressMessages(philentropy::KL(X))
         
         KL_IHR[[r]][dataOff,i] <- KL
         
@@ -1102,7 +943,7 @@ for (r in c(regions,"england")){
         changed_interp[is.na(changed_interp)] <- 0
         
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
-        KL<-philentropy::KL(X)
+        KL<-suppressMessages(philentropy::KL(X))
         
         KL_HFR[[r]][dataOff,i] <- KL
         
@@ -1179,7 +1020,7 @@ for (r in c(regions,"england")){
         changed_interp[is.na(changed_interp)] <- 0
         
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
-        KL<-philentropy::KL(X)
+        KL<-suppressMessages(philentropy::KL(X))
         
         KL_R0[[r]][dataOff,variant] <- KL
         
@@ -1251,7 +1092,7 @@ for (r in regions){
         changed_interp[is.na(changed_interp)] <- 0
         
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
-        KL<-philentropy::KL(X)
+        KL<-suppressMessages(philentropy::KL(X))
         
         temp=melt(temp,variable.name='data_off')
         subtitle=paste("origianl &",dataOff, 'KL_div =', round(KL,4))
