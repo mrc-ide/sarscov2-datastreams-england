@@ -1,0 +1,209 @@
+---
+title: "KL Divergence Between Univariate Gaussian Distributions"
+author: "Marc Baguelin"
+format:
+  revealjs:
+    footer: "[Intuition on KL-divergence for simple monovariate distributions](https://www.imperial.ac.uk/people/m.baguelin)"
+    slide-number: c/t
+---
+
+# Background
+  
+## Introduction
+  
+- KL-divergence measures how a distribution differs from a reference distribution
+- It shares features of a distance e.g. $$D_{KL}(P || Q)=0 \Leftrightarrow P=Q$$
+- But not symetric in general i.e. $$D_{KL}(P || Q) \neq D_{KL}(Q || P)$$
+
+## KL Divergence Formula
+
+- KL divergence between two distributions using their pdf
+$$ D_{KL}(P || Q) = \int_{-\infty}^{\infty} p(x) \log\left(\frac{p(x)}{q(x)}\right) \, dx$$
+- Can be seen as an expectation $$D_{KL}(P || Q) = E_{P} \left [ \log \left ( \frac{P}{Q} \right ) \right ]$$  
+
+## Gaussian Distributions
+
+- Formula for the PDF of an univariate Gaussian distribution
+$$p(x | \mu, \sigma) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{(x - \mu)^2}{2\sigma^2}}$$
+- Leads to the following formula if $P$ and $Q$ Gaussian
+$$D_{KL}(P_{\mu_{1}, \sigma_{1}} || Q_{\mu_{2}, \sigma_{2}}) = \log \left (\frac{\sigma_{2}}{\sigma_{1}} \right ) +\frac{\sigma_{1}^{2}+(\mu_{1}-\mu_{2})^{2}}{2 \sigma_{2}^2} - \frac{1}{2}$$
+
+## Calculate $D_{KL}$
+
+The above suggests 3 ways to calculate the KL-divergence:
+
+- Approximating the integral
+- Using the exact formula
+- Using a Monte Carlo approximation
+
+# R experiments
+
+## Defining Gaussians
+
+Normal distribution can be "defined" as a list of mean & standard deviation
+
+$$P \sim N(0,1)$$
+```{r, echo=TRUE}
+P <- list(mean=0,sd=1)
+```
+
+$$Q \sim N(1,1)$$
+
+```{r, echo=TRUE}
+Q <- list(mean=1,sd=1)
+```
+
+## R functions for formula & MC {.smaller}
+
+In the case of two Gaussians we can simply use the formula
+```{r, echo=TRUE}
+kl_divergence_exact <- function(P, Q){
+  log(Q$sd/P$sd) + 0.5*(P$sd^2+(P$mean-Q$mean)^2)/Q$sd^2-0.5
+}
+```
+
+Or use the MC estimation
+```{r, echo=TRUE}
+kl_divergence_MC <- function(P,Q,n){
+x <- rnorm(n, mean = P$mean, sd = P$sd) #draw from the reference normal
+log_ratios <- log(dnorm(x, P$mean, P$sd)/dnorm(x, Q$mean, Q$sd)) #calculate the log-ratios
+estimate <- mean(log_ratios) #calculate the mean
+list(samples=x,log_ratios=log_ratios,estimate=estimate) #return values
+}
+```
+
+Running functions
+```{r, echo=TRUE}
+kl_divergence_exact(P,Q)
+kl_divergence_MC(P,Q,1000)$estimate
+```
+
+## Visualising MC {.smaller}
+
+:::: {.columns}
+
+::: {.column width="40%"}
+- We can run the MC function and then use cumsum() to produce the sequence of MC estimates
+
+```{r, echo=TRUE, eval=FALSE}
+#define number of samples
+n_samples <- 2000
+
+#(1,2,...,n_samples)
+i <- seq(n_samples)
+
+#uses the function defined above
+#returns the vector of log-ratios
+MC_results <- kl_divergence_MC(P,
+                               Q,
+                               n_samples)
+#uses cumsum(MC_results$log_ratios)/i
+#to calculate the vector of estimates
+#and plot it
+plot(i,
+     cumsum(MC_results$log_ratios)/i,
+     ylab="Monte Carlo estimate",
+     xlab="Number of samples",
+     type = 'l')
+abline(h=kl_divergence_exact(P,Q),
+       col="red")
+```
+:::
+::: {.column width="60%"}
+```{r, fig.asp=1}
+n_samples <- 2000
+i <- seq(n_samples)
+MC_results <- kl_divergence_MC(P,Q,n_samples)
+plot(i,cumsum(MC_results$log_ratios)/i,
+     ylab="Monte Carlo estimate",
+     xlab="Number of samples",
+     type = 'l')
+abline(h=kl_divergence_exact(P,Q), col="red")
+```
+:::
+
+::::
+
+## Approximate integral
+
+We can estimate the integral using the trapezoidal rule
+
+```{r, echo=TRUE}
+# R code for generating Gaussian distributions
+# and calculating KL divergence
+
+# Function to calculate KL divergence
+kl_divergence_trapezoid <- function(P, Q, xlim = c(-5,5), n = 100) {
+  x <- seq(xlim[1],xlim[2], length.out = n)
+  p <- dnorm(x, mean = P$mean, sd = P$sd)
+  q <- dnorm(x, mean = Q$mean, sd = Q$sd)
+  (xlim[2]-xlim[1])*sum(p*c(0.5,rep(1,n-1),0.5)*log(p/q), na.rm=TRUE)/n
+}
+```
+
+Running the function
+```{r, echo=TRUE}
+kl_divergence_trapezoid(P,Q)
+```
+
+```{r}
+plot_two_gaussian <- function(P, Q, xlim = c(-5,5), n = 100) {
+  x <- seq(xlim[1],xlim[2], length.out = n)
+  p <- dnorm(x, mean = P$mean, sd = P$sd)
+  q <- dnorm(x, mean = Q$mean, sd = Q$sd)
+
+# Plot the Gaussian distributions
+plot(x, p, type = "l", col = "blue", lwd = 2, ylim = range(c(p,q)), 
+     main = "Gaussian Distributions",
+     xlab = "x", ylab = "Density")
+lines(x, q, col = "red", lwd = 2)
+legend("topright", legend = c("Distribution P", "Distribution Q"),
+       col = c("blue", "red"), lty = 1, cex = 0.8)
+}
+
+n_slide <- 1
+```
+
+## Example `r n_slide` {.smaller}
+
+P ~ N( `r paste0(P$mean, ", ", P$sd, ") and Q ~ N(", Q$mean, ", ", P$sd, ")")`
+```{r}
+plot_two_gaussian(P,Q)
+cat("KL from formula: ", kl_divergence_exact(P,Q))
+cat("KL from MC:", kl_divergence_MC(P,Q,n_samples)$estimate)
+cat("KL from Trapezoid: ", kl_divergence_trapezoid(P,Q))
+```
+
+```{r}
+#Changing values for next slide
+n_slide <- n_slide + 1
+Q <- list(mean=2,sd=1)
+```
+
+## Example `r n_slide` {.smaller}
+
+P ~ N( `r paste0(P$mean, ", ", P$sd, ") and Q ~ N(", Q$mean, ", ", P$sd, ")")`
+```{r}
+plot_two_gaussian(P,Q)
+cat("KL from formula: ", kl_divergence_exact(P,Q))
+cat("KL from MC:", kl_divergence_MC(P,Q,n_samples)$estimate)
+cat("KL from Trapezoid: ", kl_divergence_trapezoid(P,Q))
+```
+
+```{r}
+#Changing values for next slide
+n_slide <- n_slide + 1
+P <- list(mean=-1, sd=1.5)
+Q <- list(mean=2,sd=1)
+```
+
+## Example `r n_slide` {.smaller}
+
+P ~ N( `r paste0(P$mean, ", ", P$sd, ") and Q ~ N(", Q$mean, ", ", P$sd, ")")`
+
+```{r}
+plot_two_gaussian(P,Q)
+cat("KL from formula: ", kl_divergence_exact(P,Q))
+cat("KL from MC:", kl_divergence_MC(P,Q,n_samples)$estimate)
+cat("KL from Trapezoid: ", kl_divergence_trapezoid(P,Q))
+```
