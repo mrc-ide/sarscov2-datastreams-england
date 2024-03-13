@@ -8,7 +8,6 @@ archive
 .Rproj.user
 contexts
 .Rhistory
-# ---^^^--- added by contributors ---^^^----------------
 slides/*_files
 *.html
 .DS_Store
