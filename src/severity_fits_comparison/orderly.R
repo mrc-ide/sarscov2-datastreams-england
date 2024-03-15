@@ -1,5 +1,7 @@
 orderly2::orderly_parameters(short_run = TRUE, deterministic = TRUE)
 
+regions <- sircovid::regions("england")
+
 #library====
 
 library(ggplot2)
@@ -16,6 +18,12 @@ library(grid)
 library(scales)
 library(forestploter)
 library(ragg)
+
+
+# source ====
+orderly2::orderly_shared_resource(global_util.R = "rtm_inference/util_new.R")
+source("global_util.R")
+source("plot.R")
 
 
 #dependency====
@@ -53,10 +61,13 @@ orderly2::orderly_artefact("HFR",c("outputs/HFR.rds",'outputs/KL_HFR.rds','outpu
 orderly2::orderly_artefact("IFR",c("outputs/IFR.rds",'outputs/KL_IFR.rds','outputs/IFR_density_plots.rds','outputs/east_of_england IFR distribution.pdf','outputs/london IFR distribution.pdf','outputs/midlands IFR distribution.pdf','outputs/north_east_and_yorkshire IFR distribution.pdf','outputs/north_west IFR distribution.pdf','outputs/south_east IFR distribution.pdf','outputs/south_west IFR distribution.pdf'))
 orderly2::orderly_artefact("IHR",c("outputs/IHR.rds",'outputs/KL_IHR.rds',"outputs/KL divergence heatmap of IHR,IFR,HFR.pdf",'outputs/IHR_density_plots.rds','outputs/east_of_england IHR distribution.pdf','outputs/london IHR distribution.pdf','outputs/midlands IHR distribution.pdf','outputs/north_east_and_yorkshire IHR distribution.pdf','outputs/north_west IHR distribution.pdf','outputs/south_east IHR distribution.pdf','outputs/south_west IHR distribution.pdf'))
 orderly2::orderly_artefact("parameters",c("outputs/KL_pars.rds","outputs/pars_density_plots.rds","outputs/pars.rds","outputs/KL divergence heatmap of parameters.pdf",'outputs/east_of_england parameter distribution.pdf','outputs/london parameter distribution.pdf','outputs/midlands parameter distribution.pdf','outputs/north_east_and_yorkshire parameter distribution.pdf','outputs/north_west parameter distribution.pdf','outputs/south_east parameter distribution.pdf','outputs/south_west parameter distribution.pdf'))
-orderly2::orderly_artefact("ifr",c("outputs/ifr_continuous.rds","outputs/KL_ifr_continuous.rds"))
-orderly2::orderly_artefact("ihr",c("outputs/ihr_continuous.rds","outputs/KL_ihr_continuous.rds"))
-orderly2::orderly_artefact("hfr",c("outputs/hfr_continuous.rds","outputs/KL_hfr_continuous.rds"))
 orderly2::orderly_artefact("diagnostics","outputs/diagnostics.rds")
+
+orderly2::orderly_artefact("Time series heatmaps",
+                           c(paste0("figs/heatmap_HFR_", c(regions, "england"), ".png"),
+                             paste0("figs/heatmap_IFR_", c(regions, "england"), ".png"),
+                             paste0("figs/heatmap_IHR_", c(regions, "england"), ".png"),
+                             paste0("figs/heatmap_Rt_", c(regions, "england"), ".png")))
 
 #load data====
 
@@ -482,270 +493,39 @@ diagnostics<-list(reference=diagnostics_original,hospital_deaths=diagnostics_dea
 
 #====
 
-if (!dir.exists('outputs')) {
-  dir.create('outputs')
-}
+dir.create('outputs', FALSE, TRUE)
+dir.create("figs", FALSE, TRUE)
 
 #save data====
 
 saveRDS(pars,file = 'outputs/pars.rds')
-saveRDS(ifr_continuous,file = 'outputs/ifr_continuous.rds')
-saveRDS(ihr_continuous,file = 'outputs/ihr_continuous.rds')
-saveRDS(hfr_continuous,file = 'outputs/hfr_continuous.rds')
 #saveRDS(Rt,file = 'outputs/Rt.rds')
 saveRDS(R0,file = 'outputs/R0.rds')
 saveRDS(IFR,file = 'outputs/IFR.rds')
 saveRDS(HFR,file = 'outputs/HFR.rds')
 saveRDS(IHR,file = 'outputs/IHR.rds')
 saveRDS(diagnostics,file = "outputs/diagnostics.rds")
-saveRDS(Rt_eff,file="outputs/Rt_eff.rds")
 
-#====
-regions <- sircovid::regions("england")
+# Time series heatmaps ====
 
-#ifr continuous KLD====
+for (r in c(regions, "england")) {
+  write_png(paste0("figs/heatmap_ifr_", r, ".png"), 
+            width = 9000, height = 2700, res = 600,
+            plot_time_series_heatmap(ifr_continuous, region, "effective IFR"))
 
-KL_ifr_continuous=as.list(matrix(nrow = length(regions)+1, ncol=1))
-names(KL_ifr_continuous)=c(regions,"england")
-for (r in c(regions,"england")){
-  KL_ifr_continuous[[r]]= matrix(nrow = length(names(ifr_continuous[[r]])),ncol=dim(ifr_continuous[[r]]$reference)[1])
-  colnames(KL_ifr_continuous[[r]]) = paste0("date", c(0,76:622))
-  rownames(KL_ifr_continuous[[r]]) = names(ifr_continuous[[r]])
-  for (i in 1:548){
-    for (dataOff in names(ifr_continuous[[r]])){
-      if (dataOff=='reference'){
-        KL_ifr_continuous[[r]][dataOff,i] <- 0
-      }else{
-        temp=data.frame(ifr_continuous[[r]]$reference[i,],ifr_continuous[[r]][[dataOff]][i,])
-        colnames(temp)=c('reference',dataOff)
-        if(anyNA(temp)){
-          KL<-0
-        }else{
-          reference <- density(temp[,1])
-          changed <- density(temp[,2])
-          common_support <- sort(union(reference$x,changed$x))
-          reference_interp <- approx(reference$x,reference$y,xout=common_support,method = 'linear')$y
-          changed_interp <- approx(changed$x,changed$y,xout=common_support, method = 'linear')$y
-          reference_interp[is.na(reference_interp)] <- 0
-          changed_interp[is.na(changed_interp)] <- 0
-          
-          X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
-          #X<-rbind(reference$y/sum(reference$y),changed$y/sum(changed$y))
-          KL<-suppressMessages(philentropy::KL(X))
-        }
-        KL_ifr_continuous[[r]][dataOff,i] <- KL
-      }
-    }
-  }
-}
-saveRDS(KL_ifr_continuous,file = 'outputs/KL_ifr_continuous.rds')
-
-for (j in 1:8){
-  r=c(regions,"england")[j]
-  R=c("East of England","London","Midlands","North East and Yorkshire","North West","South East","South West","England")[j]
-  temp=melt(KL_ifr_continuous[[r]])
-  names(temp)=c("data_stream","date","value")
-  setDT(temp)
-  temp[,dateI:=as.integer(str_extract(date,'\\d+'))]
-  temp[,data_stream:=factor(data_stream,rownames(KL_ifr_continuous[[r]]))]
-  ds<-sapply(setNames(,622:76),function(x) as.character(as_date('2021-09-13')-(622-as.integer(x))))
-  temp[,DATE:=ds[as.character(dateI)]]
-  temp[dateI==0,DATE:='2020-03-16']
-  temp[,DATE:=as.Date(DATE)]
-  p<-ggplot(temp,aes(x=DATE,y=data_stream,fill=value))+
-    geom_tile(height=0.95,colour=NA)+
-    theme_bw()+
-    scale_fill_gradientn(colours=c("#122B42","#73B9F8","#98C9FB"),values = scales::rescale(c(0, 8.5 / 12, 1)),limits = c(0, 12))+
-    labs(x='Date',y='',fill='')+
-    theme(legend.key.height=unit(1.7,'cm'),panel.grid=element_blank())+
-    scale_x_date(date_breaks = "1 month", date_labels = "%m-%Y")+
-    ggtitle(paste0("KL divergence heatmap of effective IFR in ",R))+
-    scale_y_discrete(labels = c("reference" = "reference", "hospital_deaths" = "hospital deaths", "community_deaths" = "community deaths", "icu_occupancy" = "ICU occupancy", "general_bed_occupancy" = "general bed occupancy", "hospital_bed_occupancy" = "hospital bed occupancy", "hospital_admission" = "hospital admission", "pillar2" = "pillar 2", "ons_pcr_testing" = "ONS_PCR_testing", "react" = "REACT", "strain" = "strain","serology"="serology"))
-  ggsave(paste0("outputs/ifr heatmap of ",r,".png"),p,dpi=600,width=15,height=4.5)
+  write_png(paste0("figs/heatmap_ihr_", r, ".png"), 
+            width = 9000, height = 2700, res = 600,
+            plot_time_series_heatmap(ihr_continuous, region, "effective IHR"))
+  
+  write_png(paste0("figs/heatmap_hfr_", r, ".png"), 
+            width = 9000, height = 2700, res = 600,
+            plot_time_series_heatmap(hfr_continuous, region, "effective HFR"))
+  
+  write_png(paste0("figs/heatmap_Rt_", r, ".png"), 
+            width = 9000, height = 2700, res = 600,
+            plot_time_series_heatmap(Rt_eff, region, "effective Rt"))
 }
 
-#ihr continuous KLD====
-
-KL_ihr_continuous=as.list(matrix(nrow = length(regions)+1, ncol=1))
-names(KL_ihr_continuous)=c(regions,"england")
-for (r in c(regions,"england")){
-  KL_ihr_continuous[[r]]= matrix(nrow = length(names(ihr_continuous[[r]])),ncol=dim(ihr_continuous[[r]]$reference)[1])
-  colnames(KL_ihr_continuous[[r]]) = paste0("date", c(0,76:622))
-  rownames(KL_ihr_continuous[[r]]) = names(ihr_continuous[[r]])
-  for (i in 1:548){
-    for (dataOff in names(ihr_continuous[[r]])){
-      if (dataOff=='reference'){
-        KL_ihr_continuous[[r]][dataOff,i] <- 0
-      }else{
-        temp=data.frame(ihr_continuous[[r]]$reference[i,],ihr_continuous[[r]][[dataOff]][i,])
-        colnames(temp)=c('reference',dataOff)
-        if(anyNA(temp)){
-          KL<-0
-        }else{
-        reference <- density(temp[,1])
-        changed <- density(temp[,2])
-        common_support <- sort(union(reference$x,changed$x))
-        reference_interp <- approx(reference$x,reference$y,xout=common_support,method = 'linear')$y
-        changed_interp <- approx(changed$x,changed$y,xout=common_support, method = 'linear')$y
-        reference_interp[is.na(reference_interp)] <- 0
-        changed_interp[is.na(changed_interp)] <- 0
-        
-        X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
-        #X<-rbind(reference$y/sum(reference$y),changed$y/sum(changed$y))
-        KL<-suppressMessages(philentropy::KL(X))
-        }
-        KL_ihr_continuous[[r]][dataOff,i] <- KL
-      }
-    }
-  }
-}
-saveRDS(KL_ihr_continuous,file = 'outputs/KL_ihr_continuous.rds')
-
-for (j in 1:8){
-  r=c(regions,"england")[j]
-  R=c("East of England","London","Midlands","North East and Yorkshire","North West","South East","South West","England")[j]
-  temp=melt(KL_ihr_continuous[[r]])
-  names(temp)=c("data_stream","date","value")
-  setDT(temp)
-  temp[,dateI:=as.integer(str_extract(date,'\\d+'))]
-  temp[,data_stream:=factor(data_stream,rownames(KL_ihr_continuous[[r]]))]
-  ds<-sapply(setNames(,622:76),function(x) as.character(as_date('2021-09-13')-(622-as.integer(x))))
-  temp[,DATE:=ds[as.character(dateI)]]
-  temp[dateI==0,DATE:='2020-03-16']
-  temp[,DATE:=as.Date(DATE)]
-  p<-ggplot(temp,aes(x=DATE,y=data_stream,fill=value))+
-    geom_tile(height=0.95,colour=NA)+
-    theme_bw()+
-    scale_fill_gradientn(colours=c("#122B42","#73B9F8","#98C9FB"),values = scales::rescale(c(0, 8.5 / 12, 1)),limits = c(0, 12))+
-    labs(x='Date',y='',fill='')+
-    theme(legend.key.height=unit(1.7,'cm'),panel.grid=element_blank())+
-    scale_x_date(date_breaks = "1 month", date_labels = "%m-%Y")+
-    ggtitle(paste0("KL divergence heatmap of effective IHR in ",R))+
-    scale_y_discrete(labels = c("reference" = "reference", "hospital_deaths" = "hospital deaths", "community_deaths" = "community deaths", "icu_occupancy" = "ICU occupancy", "general_bed_occupancy" = "general bed occupancy", "hospital_bed_occupancy" = "hospital bed occupancy", "hospital_admission" = "hospital admission", "pillar2" = "pillar 2", "ons_pcr_testing" = "ONS_PCR_testing", "react" = "REACT", "strain" = "strain","serology"="serology"))
-  ggsave(paste0("outputs/ihr heatmap of ",r,".png"),p,dpi=600,width=15,height=4.5)
-}
-
-#hfr continuous KLD====
-
-KL_hfr_continuous=as.list(matrix(nrow = length(regions)+1, ncol=1))
-names(KL_hfr_continuous)=c(regions,"england")
-for (r in c(regions,"england")){
-  KL_hfr_continuous[[r]]= matrix(nrow = length(names(hfr_continuous[[r]])),ncol=dim(hfr_continuous[[r]]$reference)[1])
-  colnames(KL_hfr_continuous[[r]]) = paste0("date", c(0,76:622))
-  rownames(KL_hfr_continuous[[r]]) = names(hfr_continuous[[r]])
-  for (i in 1:dim(hfr_continuous[[r]]$reference)[1]){
-    for (dataOff in names(hfr_continuous[[r]])){
-      if (dataOff=='reference'){
-        KL_hfr_continuous[[r]][dataOff,i] <- 0
-      }else{
-        temp=data.frame(hfr_continuous[[r]]$reference[i,],hfr_continuous[[r]][[dataOff]][i,])
-        colnames(temp)=c('reference',dataOff)
-        if(anyNA(temp)){
-          KL<-0
-        }else{
-        reference <- density(temp[,1])
-        changed <- density(temp[,2])
-        common_support <- sort(union(reference$x,changed$x))
-        reference_interp <- approx(reference$x,reference$y,xout=common_support,method = 'linear')$y
-        changed_interp <- approx(changed$x,changed$y,xout=common_support, method = 'linear')$y
-        reference_interp[is.na(reference_interp)] <- 0
-        changed_interp[is.na(changed_interp)] <- 0
-        
-        X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
-        #X<-rbind(reference$y/sum(reference$y),changed$y/sum(changed$y))
-        KL<-suppressMessages(philentropy::KL(X))
-        }
-        KL_hfr_continuous[[r]][dataOff,i] <- KL
-      }
-    }
-  }
-}
-saveRDS(KL_hfr_continuous,file = 'outputs/KL_hfr_continuous.rds')
-
-for (j in 1:8){
-  r=c(regions,"england")[j]
-  R=c("East of England","London","Midlands","North East and Yorkshire","North West","South East","South West","England")[j]
-  temp=melt(KL_hfr_continuous[[r]])
-  names(temp)=c("data_stream","date","value")
-  setDT(temp)
-  temp[,dateI:=as.integer(str_extract(date,'\\d+'))]
-  temp[,data_stream:=factor(data_stream,rownames(KL_hfr_continuous[[r]]))]
-  ds<-sapply(setNames(,622:76),function(x) as.character(as_date('2021-09-13')-(622-as.integer(x))))
-  temp[,DATE:=ds[as.character(dateI)]]
-  temp[dateI==0,DATE:='2020-03-16']
-  temp[,DATE:=as.Date(DATE)]
-  p<-ggplot(temp,aes(x=DATE,y=data_stream,fill=value))+
-    geom_tile(height=0.95,colour=NA)+
-    theme_bw()+
-    scale_fill_gradientn(colours=c("#122B42","#73B9F8","#98C9FB"),values = scales::rescale(c(0, 8.5 / 12, 1)),limits = c(0, 12))+
-    labs(x='Date',y='',fill='')+
-    theme(legend.key.height=unit(1.7,'cm'),panel.grid=element_blank())+
-    scale_x_date(date_breaks = "1 month", date_labels = "%m-%Y")+
-    ggtitle(paste0("KL divergence heatmap of effective HFR in ",R))+
-    scale_y_discrete(labels = c("reference" = "reference", "hospital_deaths" = "hospital deaths", "community_deaths" = "community deaths", "icu_occupancy" = "ICU occupancy", "general_bed_occupancy" = "general bed occupancy", "hospital_bed_occupancy" = "hospital bed occupancy", "hospital_admission" = "hospital admission", "pillar2" = "pillar 2", "ons_pcr_testing" = "ONS_PCR_testing", "react" = "REACT", "strain" = "strain","serology"="serology"))
-  ggsave(paste0("outputs/hfr heatmap of ",r,".png"),p,dpi=600,width=15,height=4.5)
-}
-
-#Rt_eff continuous KLD====
-
-KL_Rt_eff=as.list(matrix(nrow = length(regions)+1, ncol=1))
-names(KL_Rt_eff)=c(regions,"england")
-for (r in c(regions,"england")){
-  KL_Rt_eff[[r]]= matrix(nrow = length(names(Rt_eff[[r]])),ncol=dim(Rt_eff[[r]]$reference)[1])
-  colnames(KL_Rt_eff[[r]]) = paste0("date", c(0,76:622))
-  rownames(KL_Rt_eff[[r]]) = names(Rt_eff[[r]])
-  for (i in 1:dim(Rt_eff[[r]]$reference)[1]){
-    for (dataOff in names(Rt_eff[[r]])){
-      if (dataOff=='reference'){
-        KL_Rt_eff[[r]][dataOff,i] <- 0
-      }else{
-        temp=data.frame(Rt_eff[[r]]$reference[i,],Rt_eff[[r]][[dataOff]][i,])
-        colnames(temp)=c('reference',dataOff)
-        if(anyNA(temp)){
-          KL<-0
-        }else{
-        reference <- density(temp[,1])
-        changed <- density(temp[,2])
-        common_support <- sort(union(reference$x,changed$x))
-        reference_interp <- approx(reference$x,reference$y,xout=common_support,method = 'linear')$y
-        changed_interp <- approx(changed$x,changed$y,xout=common_support, method = 'linear')$y
-        reference_interp[is.na(reference_interp)] <- 0
-        changed_interp[is.na(changed_interp)] <- 0
-        
-        X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
-        #X<-rbind(reference$y/sum(reference$y),changed$y/sum(changed$y))
-        KL<-suppressMessages(philentropy::KL(X))
-        }
-        KL_Rt_eff[[r]][dataOff,i] <- KL
-      }
-    }
-  }
-}
-saveRDS(KL_Rt_eff,file = 'outputs/KL_Rt_eff.rds')
-
-for (j in 1:8){
-  r=c(regions,"england")[j]
-  R=c("East of England","London","Midlands","North East and Yorkshire","North West","South East","South West","England")[j]
-  temp=melt(KL_Rt_eff[[r]])
-  names(temp)=c("data_stream","date","value")
-  setDT(temp)
-  temp[,dateI:=as.integer(str_extract(date,'\\d+'))]
-  temp[,data_stream:=factor(data_stream,rownames(KL_Rt_eff[[r]]))]
-  ds<-sapply(setNames(,622:76),function(x) as.character(as_date('2021-09-13')-(622-as.integer(x))))
-  temp[,DATE:=ds[as.character(dateI)]]
-  temp[dateI==0,DATE:='2020-03-16']
-  temp[,DATE:=as.Date(DATE)]
-  p<-ggplot(temp,aes(x=DATE,y=data_stream,fill=value))+
-    geom_tile(height=0.95,colour=NA)+
-    theme_bw()+
-    scale_fill_gradientn(colours=c("#122B42","#73B9F8","#98C9FB"),values = scales::rescale(c(0, 8.5 / 12, 1)),limits = c(0, 12))+
-    labs(x='Date',y='',fill='')+
-    theme(legend.key.height=unit(1.7,'cm'),panel.grid=element_blank())+
-    scale_x_date(date_breaks = "1 month", date_labels = "%m-%Y")+
-    ggtitle(paste0("KL divergence heatmap of effective Rt in ",R))+
-    scale_y_discrete(labels = c("reference" = "reference", "hospital_deaths" = "hospital deaths", "community_deaths" = "community deaths", "icu_occupancy" = "ICU occupancy", "general_bed_occupancy" = "general bed occupancy", "hospital_bed_occupancy" = "hospital bed occupancy", "hospital_admission" = "hospital admission", "pillar2" = "pillar 2", "ons_pcr_testing" = "ONS_PCR_testing", "react" = "REACT", "strain" = "strain","serology"="serology"))
-  ggsave(paste0("outputs/Rt_eff heatmap of ",r,".png"),p,dpi=600,width=15,height=4.5)
-}
 
 #ifr emergency3 KLD&density====
 
@@ -761,7 +541,7 @@ for (r in c(regions,"england")){
   names(IFR_density_plots[[r]]) = c('grided_plots',"Wildtype","Alpha","Delta")
   IFR_density_plots[[r]]$grided_plots = as.list(matrix(nrow=3,ncol=1))
   names(IFR_density_plots[[r]]$grided_plots) = c("Wildtype","Alpha","Delta")
-  
+
   for (i in 1:3){
     temp=c("Wildtype","Alpha","Delta")
     tempname=temp[i]
@@ -780,7 +560,7 @@ for (r in c(regions,"england")){
       }else{
         temp=data.frame(IFR[[r]]$reference[i,],IFR[[r]][[dataOff]][i,])
         colnames(temp)=c('reference',dataOff)
-        
+
         reference <- density(temp[,1])
         changed <- density(temp[,2])
         common_support <- sort(union(reference$x,changed$x))
@@ -788,13 +568,13 @@ for (r in c(regions,"england")){
         changed_interp <- approx(changed$x,changed$y,xout=common_support, method = 'linear')$y
         reference_interp[is.na(reference_interp)] <- 0
         changed_interp[is.na(changed_interp)] <- 0
-        
+
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
         #X<-rbind(reference$y/sum(reference$y),changed$y/sum(changed$y))
         KL<-suppressMessages(philentropy::KL(X))
-        
+
         KL_IFR[[r]][dataOff,i] <- KL
-        
+
         temp=melt(temp,variable.name='data_off')
         subtitle=paste("origianl &",dataOff, 'KL_div =', round(KL,4))
         IFR_density_plots[[r]][[tempname]][[dataOff]] <-
@@ -838,7 +618,7 @@ for (r in c(regions,"england")){
   names(IHR_density_plots[[r]]) = c('grided_plots',"Wildtype","Alpha","Delta")
   IHR_density_plots[[r]]$grided_plots = as.list(matrix(nrow=3,ncol=1))
   names(IHR_density_plots[[r]]$grided_plots) = c("Wildtype","Alpha","Delta")
-  
+
   for (i in 1:3){
     temp=c("Wildtype","Alpha","Delta")
     tempname=temp[i]
@@ -857,7 +637,7 @@ for (r in c(regions,"england")){
       }else{
         temp=data.frame(IHR[[r]]$reference[i,],IHR[[r]][[dataOff]][i,])
         colnames(temp)=c('reference',dataOff)
-        
+
         reference <- density(temp[,1])
         changed <- density(temp[,2])
         common_support <- sort(union(reference$x,changed$x))
@@ -865,12 +645,12 @@ for (r in c(regions,"england")){
         changed_interp <- approx(changed$x,changed$y,xout=common_support, method = 'linear')$y
         reference_interp[is.na(reference_interp)] <- 0
         changed_interp[is.na(changed_interp)] <- 0
-        
+
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
         KL<-suppressMessages(philentropy::KL(X))
-        
+
         KL_IHR[[r]][dataOff,i] <- KL
-        
+
         temp=melt(temp,variable.name='data_off')
         subtitle=paste("origianl &",dataOff, 'KL_div =', round(KL,4))
         IHR_density_plots[[r]][[tempname]][[dataOff]] <-
@@ -914,7 +694,7 @@ for (r in c(regions,"england")){
   names(HFR_density_plots[[r]]) = c('grided_plots',"Wildtype","Alpha","Delta")
   HFR_density_plots[[r]]$grided_plots = as.list(matrix(nrow=3,ncol=1))
   names(HFR_density_plots[[r]]$grided_plots) = c("Wildtype","Alpha","Delta")
-  
+
   for (i in 1:3){
     temp=c("Wildtype","Alpha","Delta")
     tempname=temp[i]
@@ -933,7 +713,7 @@ for (r in c(regions,"england")){
       }else{
         temp=data.frame(HFR[[r]]$reference[i,],HFR[[r]][[dataOff]][i,])
         colnames(temp)=c('reference',dataOff)
-        
+
         reference <- density(temp[,1])
         changed <- density(temp[,2])
         common_support <- sort(union(reference$x,changed$x))
@@ -941,12 +721,12 @@ for (r in c(regions,"england")){
         changed_interp <- approx(changed$x,changed$y,xout=common_support, method = 'linear')$y
         reference_interp[is.na(reference_interp)] <- 0
         changed_interp[is.na(changed_interp)] <- 0
-        
+
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
         KL<-suppressMessages(philentropy::KL(X))
-        
+
         KL_HFR[[r]][dataOff,i] <- KL
-        
+
         temp=melt(temp,variable.name='data_off')
         subtitle=paste("origianl &",dataOff, 'KL_div =', round(KL,4))
         HFR_density_plots[[r]][[tempname]][[dataOff]] <-
@@ -986,16 +766,16 @@ for (r in c(regions,"england")){
   KL_R0[[r]]= matrix(nrow = length(names(R0[[r]])),ncol=length(names(R0[[r]]$reference)))
   colnames(KL_R0[[r]]) = names(R0[[r]]$reference)
   rownames(KL_R0[[r]]) = names(R0[[r]])
-  
+
   R0_density_plots[[r]]= as.list(matrix(nrow = 4,ncol=1))
   names(R0_density_plots[[r]]) = c('grided_plots',"Wildtype","Alpha","Delta")
   R0_density_plots[[r]]$grided_plots = as.list(matrix(nrow=3,ncol=1))
   names(R0_density_plots[[r]]$grided_plots) = c("Wildtype","Alpha","Delta")
-  
+
   for (variant in names(R0[[r]]$reference)){
     R0_density_plots[[r]][[variant]] = as.list(matrix(nrow=length(names(R0[[r]])),ncol=1))
     names(R0_density_plots[[r]][[variant]]) = names(R0[[r]])
-    
+
     for (dataOff in names(R0[[r]])){
       if (dataOff=='reference'){
         temp=as.data.frame(R0[[r]]$reference)
@@ -1010,7 +790,7 @@ for (r in c(regions,"england")){
       }else{
         temp=data.frame(R0[[r]]$reference[[variant]],R0[[r]][[dataOff]][[variant]])
         colnames(temp)=c('reference',dataOff)
-        
+
         reference <- density(temp[,1])
         changed <- density(temp[,2])
         common_support <- sort(union(reference$x,changed$x))
@@ -1018,12 +798,12 @@ for (r in c(regions,"england")){
         changed_interp <- approx(changed$x,changed$y,xout=common_support, method = 'linear')$y
         reference_interp[is.na(reference_interp)] <- 0
         changed_interp[is.na(changed_interp)] <- 0
-        
+
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
         KL<-suppressMessages(philentropy::KL(X))
-        
+
         KL_R0[[r]][dataOff,variant] <- KL
-        
+
         temp=melt(temp,variable.name='data_off')
         subtitle=paste("origianl &",dataOff, 'KL_div =', round(KL,4))
         R0_density_plots[[r]][[variant]][[dataOff]] <-
@@ -1063,11 +843,11 @@ for (r in regions){
   KL_pars[[r]]= matrix(nrow = length(names(pars[[r]])),ncol=length(colnames(pars[[r]]$reference)))
   colnames(KL_pars[[r]]) = colnames(pars[[r]]$reference)
   rownames(KL_pars[[r]]) = names(pars[[r]])
-  
+
   for (parameter in colnames(pars[[r]]$reference)){
     pars_density_plots[[r]][[parameter]] = as.list(matrix(nrow=length(names(pars[[r]])),ncol=1))
     names(pars_density_plots[[r]][[parameter]]) = names(pars[[r]])
-    
+
     for (dataOff in names(pars[[r]])){
       if (dataOff=='reference'){
         temp=as.data.frame(pars[[r]]$reference)
@@ -1082,7 +862,7 @@ for (r in regions){
       }else{
         temp=data.frame(pars[[r]]$reference[,colnames(pars[[r]]$reference) %in% parameter],pars[[r]][[dataOff]][,colnames(pars[[r]][[dataOff]]) %in% parameter])
         colnames(temp)=c('reference',dataOff)
-        
+
         reference <- density(temp[,1])
         changed <- density(temp[,2])
         common_support <- sort(union(reference$x,changed$x))
@@ -1090,10 +870,10 @@ for (r in regions){
         changed_interp <- approx(changed$x,changed$y,xout=common_support, method = 'linear')$y
         reference_interp[is.na(reference_interp)] <- 0
         changed_interp[is.na(changed_interp)] <- 0
-        
+
         X<-rbind(reference_interp/sum(reference_interp),changed_interp/sum(changed_interp))
         KL<-suppressMessages(philentropy::KL(X))
-        
+
         temp=melt(temp,variable.name='data_off')
         subtitle=paste("origianl &",dataOff, 'KL_div =', round(KL,4))
         pars_density_plots[[r]][[parameter]][[dataOff]] <-
@@ -1132,7 +912,7 @@ for (j in 1:7){
   R=c("East of England","London","Midlands","North East and Yorkshire","North West","South East","South West")[j]
   data_melt <- melt(KL_pars[[r]])
   tmp=paste0("KL divergence of parameters in ",R)
-  ggp <- ggplot(data_melt, aes(Var1, Var2)) +                         
+  ggp <- ggplot(data_melt, aes(Var1, Var2)) +
     geom_tile(aes(fill = value))+
     theme(axis.title.x = element_blank(), axis.title.y = element_blank())+
     ggtitle(tmp)+
@@ -1149,27 +929,27 @@ pdf(paste0("outputs/KL divergence heatmap of IHR,IFR,HFR.pdf"),width =10, height
 for (r in names(KL_IFR)){
   data_melt <- melt(KL_IFR[[r]])
   tmp=paste0("IFR in ",r)
-  ggp_IFR <- ggplot(data_melt, aes(Var2, Var1)) +                         
+  ggp_IFR <- ggplot(data_melt, aes(Var2, Var1)) +
     geom_tile(aes(fill = value))+
     theme(axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.y = element_blank())+
     ggtitle(tmp)+
     guides(fill = FALSE)+
-    coord_fixed() 
+    coord_fixed()
   data_melt <- melt(KL_IHR[[r]])
   tmp=paste0("IHR in ",r)
-  ggp_IHR <- ggplot(data_melt, aes(Var2, Var1)) +                         
+  ggp_IHR <- ggplot(data_melt, aes(Var2, Var1)) +
     geom_tile(aes(fill = value))+
     theme(axis.title.x = element_blank(), axis.title.y = element_blank())+
     ggtitle(tmp)+
     guides(fill = FALSE)+
-    coord_fixed() 
+    coord_fixed()
   data_melt <- melt(KL_HFR[[r]])
   tmp=paste0("HFR in ",r)
-  ggp_HFR <- ggplot(data_melt, aes(Var2, Var1)) +                         
+  ggp_HFR <- ggplot(data_melt, aes(Var2, Var1)) +
     geom_tile(aes(fill = value))+
     theme(axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.y = element_blank())+
     ggtitle(tmp)+
-    coord_fixed() 
+    coord_fixed()
   grid.arrange(ggp_IHR, ggp_IFR, ggp_HFR, ncol= 3,top=NULL)
 }
 dev.off()
@@ -1180,28 +960,28 @@ for (r in names(KL_R0)){
   if (r==names(KL_R0)[1]){
     data_melt <- melt(KL_R0[[r]])
     tmp=paste0("R0 in ",r)
-    ggp[[r]] <- ggplot(data_melt, aes(Var2, Var1)) +                         
+    ggp[[r]] <- ggplot(data_melt, aes(Var2, Var1)) +
       geom_tile(aes(fill = value))+
       theme(axis.title.x = element_blank(), axis.title.y = element_blank())+
       ggtitle(r)+
       coord_fixed()+
-      guides(fill = FALSE) 
+      guides(fill = FALSE)
   }else if(r==names(KL_R0)[8]){
     data_melt <- melt(KL_R0[[r]])
     tmp=paste0("R0 in ",r)
-    ggp[[r]] <- ggplot(data_melt, aes(Var2, Var1)) +                         
+    ggp[[r]] <- ggplot(data_melt, aes(Var2, Var1)) +
       geom_tile(aes(fill = value))+
       theme(axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.y = element_blank())+
       ggtitle(r)+
-      coord_fixed() 
+      coord_fixed()
   }else{
     data_melt <- melt(KL_R0[[r]])
-    ggp[[r]] <- ggplot(data_melt, aes(Var2, Var1)) +                         
+    ggp[[r]] <- ggplot(data_melt, aes(Var2, Var1)) +
       geom_tile(aes(fill = value))+
       theme(axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.y = element_blank())+
       ggtitle(r)+
-      coord_fixed()+ 
-      guides(fill = FALSE) 
+      coord_fixed()+
+      guides(fill = FALSE)
   }
 }
 p<-grid.arrange(grobs=ggp,ncol=length(names(ggp)),top=NULL)
@@ -1239,7 +1019,7 @@ for (j in 1:8){
       data[[r]][[variant]][dataOff,"lower_bound"]=unname(temp[1])
       data[[r]][[variant]][dataOff,"upper_bound"]=unname(temp[length(temp)])
     }
-    
+
     setDT(data[[r]][[variant]])
     heatmap<-ggplot(data[[r]][[variant]],aes(x='x',y=factor(data_stream, levels = levels(data_stream)[length(levels(data_stream)):1]),fill=KL_divergence))+
       geom_tile(colour='gray60')+
@@ -1253,7 +1033,7 @@ for (j in 1:8){
     p <- ggplotGrob(heatmap)
     pop <- p$grobs[[5]]
     leg <- p$grobs[[14]]
-    tm <- forest_theme(base_size = 8, 
+    tm <- forest_theme(base_size = 8,
                        ci_pch = 15,
                        ci_col = "#2F4F96",
                        ci_lty = 1,
@@ -1338,7 +1118,7 @@ for (j in 1:8){
       data[[r]][[variant]][dataOff,"lower_bound"]=unname(temp[1])
       data[[r]][[variant]][dataOff,"upper_bound"]=unname(temp[length(temp)])
     }
-    
+
     setDT(data[[r]][[variant]])
     heatmap<-ggplot(data[[r]][[variant]],aes(x='x',y=factor(data_stream, levels = levels(data_stream)[length(levels(data_stream)):1]),fill=KL_divergence))+
       geom_tile(colour='gray60')+
@@ -1352,7 +1132,7 @@ for (j in 1:8){
     p <- ggplotGrob(heatmap)
     pop <- p$grobs[[5]]
     leg <- p$grobs[[14]]
-    tm <- forest_theme(base_size = 8, 
+    tm <- forest_theme(base_size = 8,
                        ci_pch = 15,
                        ci_col = "#2F4F96",
                        ci_lty = 1,
@@ -1430,7 +1210,7 @@ for (j in 1:8){
       data[[r]][[variant]][dataOff,"lower_bound"]=unname(temp[1])
       data[[r]][[variant]][dataOff,"upper_bound"]=unname(temp[length(temp)])
     }
-    
+
     setDT(data[[r]][[variant]])
     heatmap<-ggplot(data[[r]][[variant]],aes(x='x',y=factor(data_stream, levels = levels(data_stream)[length(levels(data_stream)):1]),fill=KL_divergence))+
       geom_tile(colour='gray60')+
@@ -1444,7 +1224,7 @@ for (j in 1:8){
     p <- ggplotGrob(heatmap)
     pop <- p$grobs[[5]]
     leg <- p$grobs[[14]]
-    tm <- forest_theme(base_size = 8, 
+    tm <- forest_theme(base_size = 8,
                        ci_pch = 15,
                        ci_col = "#2F4F96",
                        ci_lty = 1,
@@ -1522,7 +1302,7 @@ for (j in 1:8){
       data[[r]][[variant]][dataOff,"lower_bound"]=unname(temp[1])
       data[[r]][[variant]][dataOff,"upper_bound"]=unname(temp[length(temp)])
     }
-    
+
     setDT(data[[r]][[variant]])
     heatmap<-ggplot(data[[r]][[variant]],aes(x='x',y=factor(data_stream, levels = levels(data_stream)[length(levels(data_stream)):1]),fill=KL_divergence))+
       geom_tile(colour='gray60')+
@@ -1536,7 +1316,7 @@ for (j in 1:8){
     p <- ggplotGrob(heatmap)
     pop <- p$grobs[[5]]
     leg <- p$grobs[[14]]
-    tm <- forest_theme(base_size = 8, 
+    tm <- forest_theme(base_size = 8,
                        ci_pch = 15,
                        ci_col = "#2F4F96",
                        ci_lty = 1,
