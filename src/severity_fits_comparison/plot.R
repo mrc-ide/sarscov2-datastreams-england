@@ -1,5 +1,6 @@
 plot_time_series_heatmap <- function(dat, region, metric) {
   
+  date <- dat$date[[1]][-1L]
   dat <- dat[[region]]
   
   calc_KL_time_series <- function(changed) {
@@ -10,7 +11,7 @@ plot_time_series_heatmap <- function(dat, region, metric) {
   
   KL <- lapply(dat, calc_KL_time_series)
   KL <- do.call(rbind, KL)
-  colnames(KL) <- as.character(sircovid::sircovid_date_as_date(c(76:622)))
+  colnames(KL) <- as.character(sircovid::sircovid_date_as_date(date))
   
   temp <- reshape2::melt(KL)
   names(temp) <- c("data_stream", "date", "value")

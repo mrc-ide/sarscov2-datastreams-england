@@ -39,9 +39,6 @@ orderly2::orderly_artefact(
     "paper_plots/suppl_compare_demography.png", "paper_plots/suppl_emergence_demography.png", "paper_plots/suppl_deaths_hosp_age.png", "paper_plots/suppl_deaths_comm_age.png", "paper_plots/suppl_hosp_adm_age.png", "paper_plots/suppl_inf_prev_age.png", "paper_plots/suppl_pillar2_age.png"))
 #orderly2::orderly_artefact("regional fitting plots and projections for comparison","paper_plots/suppl_sev_winter_20_21.png","paper_plots/paper_figure_1.png", "paper_plots/paper_figure_2.png", "paper_plots/suppl_age_heatmaps.png", "paper_plots/suppl_compare_hfr.png", "paper_plots/suppl_regional_intrinsic.png", "paper_plots/suppl_admissions_vacc.png", "paper_plots/suppl_deaths_vacc.png")
 orderly2::orderly_artefact("Gelman-Rubin & ESS","outputs/diagnostics.rds")
-orderly2::orderly_artefact("R0","outputs/R0.rds")
-orderly2::orderly_artefact("engaland intrinsic severity data","outputs/england_intrinsic_severity.rds")
-orderly2::orderly_artefact("england severity data","outputs/england_severity.rds")
 
 library(sircovid)
 library(spimalot)
@@ -91,9 +88,6 @@ saveRDS(dat$data, "outputs/aggregated_data.rds")
 
 saveRDS(dat$rt$england, "regional_results/Rt_england.rds")
 saveRDS(dat$rt, "regional_results/Rt_all.rds")
-saveRDS(dat$onward, "outputs/combined.rds")
-saveRDS(dat$intrinsic_severity_raw$england, "outputs/england_intrinsic_severity.rds")
-saveRDS(dat$severity$england, "outputs/england_severity.rds")
 spimalot::spim_pars_pmcmc_save(dat$parameters, "outputs/parameters")
 
 model_demography <-
@@ -102,8 +96,11 @@ model_demography <-
 saveRDS(model_demography, "outputs/model_demography.rds")
 write_csv(dat$intrinsic_severity, "outputs/intrinsic_severity.csv")
 
-R0 <- get_R0_england(dat)
-saveRDS(R0, "outputs/R0.rds")
+diagnostics <- get_convergence_diagnostic(dat)
+saveRDS(diagnostics, "outputs/diagnostics.rds")
+
+combined <- get_combined(dat)
+saveRDS(combined, "outputs/combined.rds")
 
 par_names <- colnames(dat$samples[[1]]$pars)
 
@@ -445,6 +442,3 @@ write_png("paper_plots/suppl_pillar2_age.png", width = 2400, height = 1200, res 
 
 ## Render rmd
 #rmarkdown::render("paper_numbers.Rmd")
-
-diagnostics <- get_convergence_diagnostic(dat)
-saveRDS(diagnostics, "outputs/diagnostics.rds")
