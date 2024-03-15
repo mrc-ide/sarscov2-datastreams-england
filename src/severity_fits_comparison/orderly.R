@@ -1,4 +1,4 @@
-orderly2::orderly_parameters(short_run = FALSE, deterministic = TRUE)
+orderly2::orderly_parameters(short_run = TRUE, deterministic = TRUE)
 
 #library====
 
@@ -1127,9 +1127,9 @@ saveRDS(KL_pars,file = 'outputs/KL_pars.rds')
 #heatmap of parameter; IHR IFR HFR emergency3; R0====
 
 pdf(paste0("outputs/KL divergence heatmap of parameters.pdf"),width =11.69, height =8.27)
-for (j in 1:8){
-  r=c(regions,"england")[j]
-  R=c("East of England","London","Midlands","North East and Yorkshire","North West","South East","South West","England")[j]
+for (j in 1:7){
+  r=c(regions)[j]
+  R=c("East of England","London","Midlands","North East and Yorkshire","North West","South East","South West")[j]
   data_melt <- melt(KL_pars[[r]])
   tmp=paste0("KL divergence of parameters in ",R)
   ggp <- ggplot(data_melt, aes(Var1, Var2)) +                         
