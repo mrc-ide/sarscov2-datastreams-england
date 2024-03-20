@@ -1,4 +1,4 @@
-orderly2::orderly_parameters(region = "london", deterministic = TRUE, short_run = TRUE, data_changed = "original",change_rate = 1)
+orderly2::orderly_parameters(region = "london", deterministic = TRUE, short_run = TRUE, data_changed = "original", change_rate = 1)
 
 orderly2::orderly_shared_resource(global_util.R = "rtm_inference/util_new.R")
 
