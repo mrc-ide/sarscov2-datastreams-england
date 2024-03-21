@@ -8,7 +8,7 @@ short_run <- TRUE
 # react, ons
 # strain, sero
 data_changed <- "original"
-change_rate <- 1
+percent_removed <- 100
 
 ## 1. severity_parsed_data
 orderly2::orderly_run("severity_parsed_data")
@@ -38,7 +38,7 @@ orderly2::orderly_run(
   parameters = list(short_run = short_run,
                     deterministic = deterministic,
                     data_changed = data_changed,
-                    change_rate = change_rate))
+                    percent_removed = percent_removed))
 
 ## 5. severity_fits_comparison
 orderly2::orderly_run(

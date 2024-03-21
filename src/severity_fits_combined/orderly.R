@@ -1,13 +1,15 @@
-orderly2::orderly_parameters(short_run = TRUE, deterministic = TRUE, data_changed = "original", change_rate = 1)
+orderly2::orderly_parameters(short_run = TRUE, deterministic = TRUE, data_changed = "original", percent_removed = 100)
 
 orderly2::orderly_shared_resource(global_util.R = "rtm_inference/util_new.R")
 
 orderly2::orderly_resource("paper_numbers.Rmd")
 
+change_rate <- percent_removed / 100
+
 for (r in sircovid::regions("england")) {
   orderly2::orderly_dependency(
     "severity_fits",
-    quote(latest(parameter:region == environment:r && parameter:data_changed == this:data_changed && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate == this:change_rate)),
+    quote(latest(parameter:region == environment:r && parameter:data_changed == this:data_changed && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate == environment:change_rate)),
     c("regional_results/${r}/fit.rds" = "outputs/fit.rds",
       "regional_figs/pmcmc_traceplots_${r}.pdf" = "outputs/pmcmc_traceplots.pdf",
       "regional_figs/multipage/pmcmc_traceplots_${r}_separate.pdf" = "outputs/pmcmc_traceplots_separate.pdf"))

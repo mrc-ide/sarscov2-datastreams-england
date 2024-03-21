@@ -32,7 +32,7 @@ plot_time_series_heatmap <- function(dat, region, metric) {
 }
 
 
-plot_forest <- function(dat, region, variant, metric) {
+plot_forest <- function(dat, region, variant, metric, datastream_head = NULL) {
   dat <- dat[[region]]
   
   get_summary <- function(changed) {
@@ -53,45 +53,57 @@ plot_forest <- function(dat, region, variant, metric) {
   if (metric == "R0") {
     if (variant == "Wildtype") {
       xlim <- c(1.5, 3.5)
+      ticks <- seq(1.5, 3.5, by = 0.5)
     } else if (variant == "Alpha") {
       xlim <- c(3, 6.5)
+      ticks <- seq(3, 6, by = 1)
     } else if (variant == "Delta") {
       xlim <- c(5, 10)
+      ticks <- seq(5, 10, by = 1)
     }
   } else if (metric == "Intrinsic IFR") {
     if (variant == "Wildtype") {
       xlim <- c(0.4, 1.4)
+      ticks <- seq(0.5, 1, by = 0.5)
     } else if (variant == "Alpha") {
       xlim <- c(0.75, 4.25)
+      ticks <- seq(1, 4, by = 1)
     } else if (variant == "Delta") {
       xlim <- c(0.5, 4)
+      ticks <- seq(1, 4, by = 1)
     }
   } else if (metric == "Intrinsic IHR") {
     if (variant == "Wildtype") {
       xlim <- c(1.15, 3.3)
+      ticks <- seq(1.5, 3, by = 0.5)
     } else if (variant == "Alpha") {
       xlim <- c(2, 5.25)
+      ticks <- seq(2, 5, by = 1)
     } else if (variant == "Delta") {
       xlim <- c(1, 9)
+      ticks <- seq(2, 8, by = 2)
     }
   } else if (metric == "Intrinsic HFR") {
     if (variant == "Wildtype") {
       xlim <- c(10, 37.5)
+      ticks <- seq(10, 30, by = 10)
     } else if (variant == "Alpha") {
       xlim <- c(15, 75)
+      ticks <- seq(20, 60, by = 20)
     } else if (variant == "Delta") {
       xlim <- c(0, 70)
+      ticks <- seq(20, 60, by = 20)
     }
   }
 
   tab <- setDT(tab)
-  heatmap <- ggplot(tab, aes(x = 'x', y = name , fill = KL)) +
+  heatmap <- ggplot(tab, aes(x = 'x', y = rev(name), fill = KL)) +
     geom_tile(colour = 'gray60') +
     scale_x_discrete(expand = expansion(0)) +
     scale_y_discrete(expand = expansion(0)) +
     scale_fill_gradientn(colours = c("#122B42", "#73B9F8", "#98C9FB"),
-                         values = scales::rescale(c(0, 8.5 / 12, 1)),
-                         limits = c(0, 12)) +
+                         values = scales::rescale(c(0, 8.5 / nrow(tab), 1)),
+                         limits = c(0, nrow(tab))) +
     theme_void() +
     labs(fill = '') +
     theme(legend.key.width = unit(0.4, 'cm'),
@@ -116,16 +128,25 @@ plot_forest <- function(dat, region, variant, metric) {
   
   if (metric == "R0") {
     dt <- tab[,.(`Excluded data stream` = get_labels(name),
-                 Mean = sprintf("%.4g", mean),
+                 Mean = sprintf("%.2f", mean),
                  ` ` = paste(rep(' ', 100), collapse = ''),
-                 `95%CrI` = paste(sprintf("%.4g", lb), sprintf("%.4g", ub), sep=" ~ "),
-                 `KL divergence` = paste(rep(' ', 2)))]
+                 `95%CrI` = paste(sprintf("%.2f", lb), sprintf("%.2f", ub), sep = " ~ "),
+                 `KL divergence` = paste(rep(' ', 2), collapse = ''))]
+  } else if (metric == "Intrinsic HFR") {
+      dt <- tab[,.(`Excluded data stream` = get_labels(name),
+                   Mean = sprintf("%.2f%%", mean),
+                   ` ` = paste(rep(' ', 100), collapse = ''),
+                   `95%CrI` = paste(sprintf("%.2f%%", lb), sprintf("%.2f%%", ub), sep = " ~ "),
+                   `KL divergence` = paste(rep(' ', 2), collapse = ''))]
   } else {
     dt <- tab[,.(`Excluded data stream` = get_labels(name),
-                 Mean = sprintf("%.4g%%", mean),
+                 Mean = sprintf("%.3f%%", mean),
                  ` ` = paste(rep(' ', 100), collapse = ''),
-                 `95%CrI` = paste(sprintf("%.4g%%", lb), sprintf("%.4g%%", ub), sep=" ~ "),
-                 `KL divergence` = paste(rep(' ', 2)))]
+                 `95%CrI` = paste(sprintf("%.3f%%", lb), sprintf("%.3f%%", ub), sep = " ~ "),
+                 `KL divergence` = paste(rep(' ', 2), collapse = ''))]
+  }
+  if (!is.null(datastream_head)) {
+    names(dt)[names(dt) == "Excluded data stream"] <- datastream_head
   }
   
   forest <- forestploter::forest(dt,
@@ -136,11 +157,17 @@ plot_forest <- function(dat, region, variant, metric) {
                                  ci_column = 3,
                                  vert_line = tab[name == 'reference', mean],
                                  xlim = xlim,
+                                 ticks_at = ticks,
                                  theme = tm,
                                  ref_line = mean(xlim),
                                  xlab = paste(metric, "of", variant),
                                  title = paste(metric, "of", variant, "in", region_to_title(region)))
-  tp <- gtable_add_grob(forest, grobs = pop, t = 4, r = 6, b = 15, l = 6)
+  if (nrow(tab) == 12) {
+    tp <- gtable_add_grob(forest, grobs = pop, t = 4, r = 6, b = 15, l = 6)
+  } else {
+    tp <- gtable_add_grob(forest, grobs = pop, t = 4, r = 6, b = 14, l = 6)
+  }
+  
   tp$widths[6] <- unit(5, 'mm')
   figure <- gtable_add_cols(tp, width = unit(0.8, 'cm'))
   figure <- gtable_add_grob(figure, grobs = leg, t = 4, r = 8, b = 15, l = 8)
@@ -267,18 +294,28 @@ region_to_title <- function(region) {
 } 
 
 get_labels <- function(names) {
-  labels <- c("reference" = "reference", 
-             "deaths_hosp" = "hospital deaths",
-             "deaths_comm" = "community deaths",
-             "icu" = "ICU occupancy",
-             "general" = "general bed occupancy",
-             "hosp" = "hospital bed occupancy",
-             "all_admission" = "hospital admission",
-             "pillar2" = "pillar 2",
-             "ons" = "ONS PCR testing",
-             "react" = "REACT",
-             "strain" = "strain",
-             "sero" = "serology")
+  labels <- c(reference = "reference", 
+              deaths_hosp = "hospital deaths",
+              deaths_comm = "community deaths",
+              icu = "ICU occupancy",
+              general = "general bed occupancy",
+              hosp = "hospital bed occupancy",
+              all_admission = "hospital admission",
+              pillar2 = "pillar 2",
+              ons = "ONS PCR testing",
+              react = "REACT",
+              strain = "strain",
+              sero = "serology",
+              deaths_comm_10 = "removed 10%",
+              deaths_comm_20 = "removed 20%",
+              deaths_comm_30 = "removed 30%",
+              deaths_comm_40 = "removed 40%",
+              deaths_comm_50 = "removed 50%",
+              deaths_comm_60 = "removed 60%",
+              deaths_comm_70 = "removed 70%",
+              deaths_comm_80 = "removed 80%",
+              deaths_comm_90 = "removed 90%",
+              deaths_comm_100 = "removed 100%")
   
-  labels[names]
+  labels[as.character(names)]
 }

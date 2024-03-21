@@ -1,4 +1,4 @@
-load_combined <- function(path, data_changed) {
+load_combined <- function(path, data_changed, custom_names) {
   files <- file.path(path, data_changed, "combined.rds")
   msg <- !file.exists(files)
   if (any(msg)) {
@@ -13,8 +13,9 @@ load_combined <- function(path, data_changed) {
     readRDS(filename)
   }
   dat <- Map(read_rds, files, data_changed)
+  names(data_changed) <- data_changed
+  data_changed[names(custom_names)] <- custom_names
   names(dat) <- data_changed
-  names(dat)[names(dat) == "original"] <- "reference"
   
   dat <- spimalot:::list_transpose(dat)
   
