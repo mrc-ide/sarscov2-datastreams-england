@@ -41,7 +41,7 @@ data_changed <- c("original", "deaths_hosp", "deaths_comm", "icu", "general",
 for (d in data_changed) {
   orderly2::orderly_dependency(
     "severity_fits_combined",
-    quote(latest(parameter:data_changed == environment:d && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:change_rate == 1)),
+    quote(latest(parameter:data_changed == environment:d && parameter:short_run == this:short_run && parameter:deterministic == this:deterministic && parameter:percent_removed == 100)),
     c("inputs/${d}/combined.rds" = "outputs/combined.rds"))
 }
 

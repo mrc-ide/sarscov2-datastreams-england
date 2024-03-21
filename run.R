@@ -44,7 +44,3 @@ orderly2::orderly_run(
 orderly2::orderly_run(
   "severity_fits_comparison",
   parameters = list(short_run = short_run))
-
-orderly2::orderly_run(
-  "severity_fits_comparison2",
-  parameters = list(short_run = short_run))
