@@ -1,0 +1,19 @@
+---
+title: "Convergence diagnostics"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width = 80)
+
+diagnostics <- dat$diagnostics
+```
+
+## Convergence diagnostics
+
+Gelman-Rubin and ESS convergence diagnostics from full chains:
+
+```{r, echo = FALSE}
+print(diagnostics)
+```
