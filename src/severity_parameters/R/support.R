@@ -4,7 +4,7 @@ load_mcmc_parameters <- function(data_changed, deterministic, percent_removed) {
   message(sprintf("Model will be run in the '%s' mode",
                   if (deterministic) "deterministic" else "stochastic"))
   
-  path_pars <- file.path("pars", percent_removed, data_changed,
+  path_pars <- file.path("pars", data_changed, percent_removed,
                          if (deterministic) "deterministic" else "stochastic")
 
   info <- read_csv(file.path(path_pars, "info.csv"))
