@@ -116,13 +116,3 @@ comparison <- hipercow::task_create_expr(
                                            cores = 8)
 )
 comparison_result <- hipercow::task_result(comparison)
-
-#comparison2
-comparison2 <- hipercow::task_create_expr(
-  orderly2::orderly_run('severity_fits_comparison2',
-                        parameters = list(short_run = FALSE,
-                                          deterministic = TRUE)),
-  resources = hipercow::hipercow_resources(queue = 'AllNodes',
-                                           cores = 8)
-)
-comparison_result <- hipercow::task_result(comparison2)
