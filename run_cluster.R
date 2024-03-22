@@ -11,7 +11,7 @@ orderly2::orderly_run("severity_parsed_data")
 orderly2::orderly_run("severity_parameters", 
                       parameters = list(deterministic = TRUE,
                                         data_changed = "icu",
-                                        change_rate = 1))
+                                        percent_removed = 100))
 
 ## ---------------------------
 ## Run in the cluster
@@ -34,7 +34,7 @@ fits <-
                                               short_run = TRUE,
                                               deterministic = TRUE,
                                               data_changed = "icu",
-                                              change_rate = 1))},
+                                              percent_removed = 100))},
     regions,
     resources = hipercow::hipercow_resources(queue = 'AllNodes',
                                              cores = 8))
@@ -49,7 +49,7 @@ combined <- hipercow::task_create_expr(
                         parameters = list(short_run = TRUE,
                                           deterministic = TRUE,
                                           data_changed = "icu",
-                                          change_rate = 1)),
+                                          percent_removed = 100)),
   resources = hipercow::hipercow_resources(queue = 'AllNodes',
                                            cores = 8)
 )
@@ -86,7 +86,7 @@ fits <-
                                               short_run = FALSE,
                                               deterministic = TRUE,
                                               data_changed = "icu",
-                                              change_rate = 1))},
+                                              percent_removed = 100))},
     regions,
     resources = hipercow::hipercow_resources(queue = 'AllNodes',
                                              cores = 8))
@@ -101,7 +101,7 @@ combined <- hipercow::task_create_expr(
                         parameters = list(short_run = FALSE,
                                           deterministic = TRUE,
                                           data_changed = "icu",
-                                          change_rate = 1)),
+                                          percent_removed = 100)),
   resources = hipercow::hipercow_resources(queue = 'AllNodes',
                                            cores = 8)
 )

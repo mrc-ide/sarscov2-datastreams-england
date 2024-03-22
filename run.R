@@ -18,7 +18,7 @@ orderly2::orderly_run(
   "severity_parameters",
   parameters = list(deterministic = deterministic,
                     data_changed = data_changed,
-                    change_rate = change_rate))
+                    percent_removed = percent_removed))
 
 ## 3. severity_fits
 for (r in sircovid::regions("england")) {
@@ -28,7 +28,7 @@ for (r in sircovid::regions("england")) {
                       short_run = short_run,
                       deterministic = deterministic,
                       data_changed = data_changed,
-                      change_rate = change_rate))
+                      percent_removed = percent_removed))
 }
 
 

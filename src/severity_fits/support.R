@@ -114,7 +114,7 @@ add_full_proposal <- function(dat, pars) {
   dat
 }
 
-change_data <- function(data, data_changed, change_rate) {
+change_data <- function(data, data_changed, percent_removed) {
   if (data_changed == "original") {
     return(data)
   } else if (data_changed == "deaths_hosp") {
@@ -144,7 +144,8 @@ change_data <- function(data, data_changed, change_rate) {
   }
   
   index <- which(rowSums(!is.na(data[, change_cols, drop = FALSE])) > 0)
-  index_na <- sample(index, round(length(index) * change_rate), replace = FALSE)
+  index_na <- 
+    sample(index, round(length(index) * percent_removed / 100), replace = FALSE)
   data[index_na, change_cols] <- NA
 
   data
