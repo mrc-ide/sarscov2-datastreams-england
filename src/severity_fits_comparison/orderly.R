@@ -20,6 +20,7 @@ library(scales)
 library(forestploter)
 library(ragg)
 library(rmarkdown)
+library(patchwork)
 
 
 # source ====
