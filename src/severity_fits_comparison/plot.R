@@ -60,6 +60,9 @@ plot_forest <- function(dat, region, variant, metric, datastream_head = NULL) {
     } else if (variant == "Delta") {
       xlim <- c(5, 10)
       ticks <- seq(5, 10, by = 1)
+    } else if (variant == "Omicron") {
+      xlim <- c(5, 10)
+      ticks <- seq(5, 10, by = 1)
     }
   } else if (metric == "Intrinsic IFR") {
     if (variant == "Wildtype") {
@@ -71,6 +74,9 @@ plot_forest <- function(dat, region, variant, metric, datastream_head = NULL) {
     } else if (variant == "Delta") {
       xlim <- c(0.5, 4)
       ticks <- seq(1, 4, by = 1)
+    } else if (variant == "Omicron") {
+      xlim <- c(0.4, 1.4)
+      ticks <- seq(0.5, 1, by = 0.5)
     }
   } else if (metric == "Intrinsic IHR") {
     if (variant == "Wildtype") {
@@ -82,6 +88,9 @@ plot_forest <- function(dat, region, variant, metric, datastream_head = NULL) {
     } else if (variant == "Delta") {
       xlim <- c(1, 9)
       ticks <- seq(2, 8, by = 2)
+    } else if (variant == "Omicron") {
+      xlim <- c(1.15, 3.3)
+      ticks <- seq(1.5, 3, by = 0.5)
     }
   } else if (metric == "Intrinsic HFR") {
     if (variant == "Wildtype") {
@@ -93,6 +102,9 @@ plot_forest <- function(dat, region, variant, metric, datastream_head = NULL) {
     } else if (variant == "Delta") {
       xlim <- c(0, 70)
       ticks <- seq(20, 60, by = 20)
+    } else if (variant == "Omicron") {
+      xlim <- c(10, 37.5)
+      ticks <- seq(10, 30, by = 10)
     }
   }
 

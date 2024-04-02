@@ -7,11 +7,20 @@ orderly2::orderly_run("severity_parsed_data")
 # all_admission, pillar2
 # react, ons
 # strain, sero
+
+regions <- sircovid::regions("england")
+data_changed <- c("original", "deaths_hosp", "deaths_comm", "icu", "general",
+                  "hosp", "all_admission", "pillar2", "ons", "react", "strain",
+                  "sero")
+
 ## 2. severity_parameters 
-orderly2::orderly_run("severity_parameters", 
-                      parameters = list(deterministic = TRUE,
-                                        data_changed = "icu",
-                                        percent_removed = 100))
+for (d in data_changed) {
+  orderly2::orderly_run("severity_parameters", 
+                        parameters = list(deterministic = TRUE,
+                                          data_changed = d,
+                                          percent_removed = 100))
+}
+  
 
 ## ---------------------------
 ## Run in the cluster
@@ -19,41 +28,44 @@ orderly2::orderly_run("severity_parameters",
 
 ## 1. Basic cluster setup
 hipercow::hipercow_init(driver = "windows")
-hipercow::hipercow_provision()
+hipercow::hipercow_provision(method = "pkgdepends",
+                             refs = "github::mrc-ide/mcstate@adaptive-v2")
 
-regions <- sircovid::regions("england")
+`#----
 
-#----
+fit_grid <- expand.grid(regions, data_changed, stringsAsFactors = FALSE)
+names(fit_grid) <- c("r", "d")
 
 ## 2. Short runs ----
 fits <- 
-  hipercow::task_create_bulk_call(
-    function(x) {
+  hipercow::task_create_bulk_expr(
       orderly2::orderly_run('severity_fits',
-                            parameters = list(region = x,
+                            parameters = list(region = r,
                                               short_run = TRUE,
                                               deterministic = TRUE,
-                                              data_changed = "icu",
-                                              percent_removed = 100))},
-    regions,
+                                              data_changed = d,
+                                              percent_removed = 100)),
+    fit_grid,
     resources = hipercow::hipercow_resources(queue = 'AllNodes',
-                                             cores = 8))
-batch <- fits$name
+                                             cores = 8)
+  )
 
 ## Collect results
-res <- hipercow::hipercow_bundle_result(batch)
+res <- hipercow::hipercow_bundle_result(fits$name)
 
 # Combined
-combined <- hipercow::task_create_expr(
-  orderly2::orderly_run('severity_fits_combined',
-                        parameters = list(short_run = TRUE,
-                                          deterministic = TRUE,
-                                          data_changed = "icu",
-                                          percent_removed = 100)),
-  resources = hipercow::hipercow_resources(queue = 'AllNodes',
-                                           cores = 8)
-)
-combined_result <- hipercow::task_result(combined)
+combined <- 
+  hipercow::task_create_bulk_call(
+    function(x) {
+      orderly2::orderly_run('severity_fits_combined',
+                            parameters = list(short_run = TRUE,
+                                              deterministic = TRUE,
+                                              data_changed = x,
+                                              percent_removed = 100))},
+    data_changed,
+    resources = hipercow::hipercow_resources(queue = 'AllNodes',
+                                             cores = 8))
+combined_result <- hipercow::hipercow_bundle_result(combined$name)
 
 # Comparison
 comparison <- hipercow::task_create_expr(
@@ -65,47 +77,39 @@ comparison <- hipercow::task_create_expr(
 )
 comparison_result <- hipercow::task_result(comparison)
 
-# Comparison2
-comparison2 <- hipercow::task_create_expr(
-  orderly2::orderly_run('severity_fits_comparison2',
-                        parameters = list(short_run = TRUE,
-                                          deterministic = TRUE)),
-  resources = hipercow::hipercow_resources(queue = 'AllNodes',
-                                           cores = 8)
-)
-comparison_result <- hipercow::task_result(comparison2)
 
 #----
 
 ## 3. Long runs ----
 fits <- 
-  hipercow::task_create_bulk_call(
-    function(x) {
-      orderly2::orderly_run('severity_fits',
-                            parameters = list(region = x,
-                                              short_run = FALSE,
-                                              deterministic = TRUE,
-                                              data_changed = "icu",
-                                              percent_removed = 100))},
-    regions,
+  hipercow::task_create_bulk_expr(
+    orderly2::orderly_run('severity_fits',
+                          parameters = list(region = r,
+                                            short_run = FALSE,
+                                            deterministic = TRUE,
+                                            data_changed = d,
+                                            percent_removed = 100)),
+    fit_grid,
     resources = hipercow::hipercow_resources(queue = 'AllNodes',
-                                             cores = 8))
-batch <- fits$name
+                                             cores = 8)
+  )
 
 ## Collect results
-res <- hipercow::hipercow_bundle_result(batch)
+res <- hipercow::hipercow_bundle_result(fits$name)
 
 # Combined
-combined <- hipercow::task_create_expr(
-  orderly2::orderly_run('severity_fits_combined',
-                        parameters = list(short_run = FALSE,
-                                          deterministic = TRUE,
-                                          data_changed = "icu",
-                                          percent_removed = 100)),
-  resources = hipercow::hipercow_resources(queue = 'AllNodes',
-                                           cores = 8)
-)
-combined_result <- hipercow::task_result(combined)
+combined <- 
+  hipercow::task_create_bulk_call(
+    function(x) {
+      orderly2::orderly_run('severity_fits_combined',
+                            parameters = list(short_run = FALSE,
+                                              deterministic = TRUE,
+                                              data_changed = x,
+                                              percent_removed = 100))},
+    data_changed,
+    resources = hipercow::hipercow_resources(queue = 'AllNodes',
+                                             cores = 8))
+combined_result <- hipercow::hipercow_bundle_result(combined$name)
 
 #comparison
 comparison <- hipercow::task_create_expr(
