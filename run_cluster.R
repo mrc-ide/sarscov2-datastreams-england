@@ -1,17 +1,14 @@
 ## 1. severity_parsed_data
 orderly2::orderly_run("severity_parsed_data")
 
-# data_changed can also be any of:
-# deaths_hosp, deaths_comm
-# icu, general, hosp
-# all_admission, pillar2
-# react, ons
-# strain, sero
-
+## orderly parameter setup
 regions <- sircovid::regions("england")
 data_changed <- c("original", "deaths_hosp", "deaths_comm", "icu", "general",
                   "hosp", "all_admission", "pillar2", "ons", "react", "strain",
                   "sero")
+fit_grid <- expand.grid(regions, data_changed, stringsAsFactors = FALSE)
+names(fit_grid) <- c("r", "d")
+
 
 ## 2. severity_parameters 
 for (d in data_changed) {
@@ -32,9 +29,6 @@ hipercow::hipercow_provision(method = "pkgdepends",
                              refs = "github::mrc-ide/mcstate@adaptive-v2")
 
 `#----
-
-fit_grid <- expand.grid(regions, data_changed, stringsAsFactors = FALSE)
-names(fit_grid) <- c("r", "d")
 
 ## 2. Short runs ----
 fits <- 

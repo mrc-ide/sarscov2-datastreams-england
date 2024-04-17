@@ -113,7 +113,7 @@ orderly2::orderly_artefact("Convergence diagnostics",
 dat <- load_combined("inputs", data_changed, c(original = "reference"))
 #deaths_comm_names <- c(paste0("deaths_comm_", seq(10, 90, 10)), "deaths_comm")
 #dat2 <- load_combined("inputs", c("original", deaths_comm_names),
-                      c(original = "reference", deaths_comm = "deaths_comm_100"))
+#                      c(original = "reference", deaths_comm = "deaths_comm_100"))
 
 #====
 
