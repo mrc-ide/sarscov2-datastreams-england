@@ -1,11 +1,8 @@
-orderly2::orderly_parameters(data_changed = "original", deterministic = TRUE, change_rate=1)
+orderly2::orderly_parameters(data_changed = "original", deterministic = TRUE, percent_removed = 100)
 
 orderly2::orderly_shared_resource(global_util.R = "rtm_inference/util_new.R")
 
-orderly2::orderly_resource(c("pars/1/original/deterministic/info.csv",
-                             "pars/1/original/deterministic/proposal.csv",
-                             "pars/1/original/stochastic/info.csv",
-                             "pars/1/original/stochastic/proposal.csv",
+orderly2::orderly_resource(c("pars",
                              "data/vaccine_efficacy_alpha.csv",
                              "data/vaccine_efficacy_delta.csv",
                              "data/vaccine_efficacy_omicron.csv",
@@ -63,7 +60,7 @@ epoch_dates <- c("2020-09-17", "2020-12-07", "2021-03-08", "2021-09-14", "2021-1
 
 ## Load all parameters from the last run; creates priors, and updates
 ## new entries into the proposal matrix as needed.
-pars <- load_mcmc_parameters(data_changed, deterministic, change_rate)
+pars <- load_mcmc_parameters(data_changed, deterministic, percent_removed)
 
 ## The baselines are always region-specific
 regions <- sircovid::regions("england")

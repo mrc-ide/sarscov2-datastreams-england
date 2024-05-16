@@ -1,4 +1,4 @@
-orderly2::orderly_parameters(region = "london", deterministic = TRUE, short_run = TRUE, data_changed = "original",change_rate = 1)
+orderly2::orderly_parameters(region = "london", deterministic = TRUE, short_run = TRUE, data_changed = "original", percent_removed = 100)
 
 orderly2::orderly_shared_resource(global_util.R = "rtm_inference/util_new.R")
 
@@ -9,7 +9,7 @@ orderly2::orderly_dependency(
     "data/serology.csv" = "outputs/serology_for_inference.csv"))
 orderly2::orderly_dependency(
   "severity_parameters",
-  "latest(parameter:data_changed == this:data_changed && parameter:deterministic == this:deterministic && parameter:change_rate == this:change_rate)",
+  "latest(parameter:data_changed == this:data_changed && parameter:deterministic == this:deterministic && parameter:percent_removed == this:percent_removed)",
   c("parameters/base.rds" = "parameters_base.rds",
     "parameters/info.csv" = "parameters_info.csv",
     "parameters/prior.csv" = "parameters_prior.csv",
@@ -87,7 +87,7 @@ data <- spim_data(
   date, region, data_rtm, data_serology, trim_deaths, trim_pillar2,
   adm_backfill_date, trim_pillar2_date, full_data = FALSE)
 
-data <- change_data(data, data_changed, change_rate)
+data <- change_data(data, data_changed, percent_removed)
 
 filter <- spimalot::spim_particle_filter(data, pars$mcmc,
                                          control$particle_filter,
