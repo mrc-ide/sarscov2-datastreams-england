@@ -564,15 +564,20 @@ forest_plot_labels <- function(dat) {
 }
 
 get_convergence_diagnostic <- function(dat) {
-  
+
   conv_dx <- function(sample) {
     n_full_pars <- nrow(sample$full_pars)
     n_chains <- max(sample$chain)
+    burnin <- sample$info$burnin
     
     sample$chain_full <- rep(seq_len(n_chains), each = n_full_pars / n_chains)
     
-    chains <- lapply(unname(split(data.frame(sample$full_pars),
-                                  sample$chain_full)), coda::as.mcmc)
+    remove_burnin <- function(x) {
+      x[-seq_len(burnin), ]
+    }
+    
+    chains <- unname(split(data.frame(sample$full_pars), sample$chain_full))
+    chains <- lapply(lapply(chains, remove_burnin), coda::as.mcmc)
     
     rhat <- tryCatch(coda::gelman.diag(chains), error = function(e) NULL)
     if (!is.null(rhat)) {
@@ -583,6 +588,7 @@ get_convergence_diagnostic <- function(dat) {
     
     ess <- function(p) {
       traces <- matrix(p, ncol = n_chains)
+      traces <- traces[-seq_len(burnin), ]
       sum(coda::effectiveSize(coda::as.mcmc(traces)))
     }
     

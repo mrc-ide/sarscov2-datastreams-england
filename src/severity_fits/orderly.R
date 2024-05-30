@@ -34,7 +34,7 @@ source("global_util.R")
 version_check("sircovid", "0.15.0")
 version_check("spimalot", "0.8.25")
 
-date <- "2021-09-13"
+date <- "2022-02-24"
 assumptions <- "central"
 
 ## We're effectively NOT trimming any data stream as backfill is not an issue here
@@ -45,17 +45,20 @@ adm_backfill_date <- date
 
 ## MCMC control (only applies if short_run = FALSE)
 if (deterministic) {
-  burnin <- 5000
+  burnin <- if (short_run) 1 else 5000
   n_mcmc <- 30000
   n_sample <- 1000
   chains <- 8
   kernel_scaling <- 0.1
+  adaptive_proposal <- 
+    mcstate::adaptive_proposal_control(initial_vcv_weight = 100)
 } else {
   burnin <- 1000
   n_mcmc <- 5000
   n_sample <- 1000
   chains <- 4
   kernel_scaling <- 0.2
+  adaptive_proposal <- FALSE
 }
 
 region <- spimalot::spim_check_region(region, multiregion = FALSE)
@@ -76,7 +79,7 @@ restart_date <- readRDS("parameters/base.rds")[[region[[1]]]]$restart_date
 control <- spimalot::spim_control(
   short_run, chains, deterministic = deterministic,
   multiregion = FALSE, severity = TRUE, demography = TRUE,
-  date_restart = restart_date, adaptive_proposal = deterministic,
+  date_restart = restart_date, adaptive_proposal = adaptive_proposal,
   n_mcmc = n_mcmc, burnin = burnin, n_sample = n_sample,
   compiled_compare = deterministic)
 
@@ -116,6 +119,7 @@ data_inputs <- list(rtm = data_rtm,
 dat <- spimalot::spim_fit_process(samples, pars, data_inputs,
                                   control$particle_filter)
 dat <- add_full_proposal(dat, pars)
+dat$fit$samples$info$burnin <- burnin
 
 dir.create("outputs", FALSE, TRUE)
 saveRDS(dat$fit, "outputs/fit.rds")

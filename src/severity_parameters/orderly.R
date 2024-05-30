@@ -46,7 +46,7 @@ version_check("sircovid", "0.15.0")
 version_check("spimalot", "0.8.25")
 
 ## Define date at which the data is capped for analysis
-date <- "2021-09-13"
+date <- "2022-02-24"
 assumptions <- "central"
 
 ## Five epochs after starting with a single strain model (without vaccination)

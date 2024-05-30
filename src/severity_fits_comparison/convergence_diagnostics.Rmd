@@ -14,5 +14,5 @@ Gelman-Rubin and ESS convergence diagnostics from full chains:
 
 ```{r, echo = FALSE}
 print(dat$diagnostics)
-print(dat2$diagnostics)
+#print(dat2$diagnostics)
 ```

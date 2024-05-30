@@ -555,7 +555,11 @@ plot_traceplots <- function(samples) {
   on.exit(par(op))
   
   new_grid <- function(n, title) {
-    par(mfrow = rep(ceiling(sqrt(n + 1)), 2),
+    dim <- rep(ceiling(sqrt(n)), 2)
+    if (n <= (dim[1] - 1) * dim[2]) {
+      dim[1] <- dim[1] - 1
+    }
+    par(mfrow = dim,
         mar = c(3, 3, 2, 1),
         mgp = c(2, 0.5, 0),
         oma = c(1, 1, 1 + as.integer(title), 1))
@@ -563,7 +567,6 @@ plot_traceplots <- function(samples) {
   
   plot_traces1 <- function(p, name) {
     traces <- matrix(p, ncol = n_chains)
-    ess <- coda::effectiveSize(coda::as.mcmc(traces))
     
     matplot(traces, type = "l", lty = 1,
             xlab = "Iteration", bty = "n",
@@ -580,3 +583,28 @@ plot_traceplots <- function(samples) {
   
 }
 
+
+plot_adaptive_scaling <- function(dat) {
+  if (is.null(dat$samples[[1]]$adaptive)) {
+    return()
+  }
+  
+  scaling <- lapply(dat$samples[sircovid::regions("england")], 
+                    function (x) x$adaptive$scaling)
+  regions <- names(scaling)
+  n_rows <- ceiling(length(regions) / 2)
+  
+  n_cols <- 2
+  
+  op <- par(no.readonly = TRUE)
+  on.exit(par(op))
+  
+  par(mfrow = c(n_rows, n_cols),
+      mar = c(3, 3, 2, 1),
+      mgp = c(2, 0.5, 0),
+      oma = c(1, 1, 1, 1))
+  
+  for (r in regions) {
+    matplot(scaling[[r]], type = "l", main = r, ylab = "scaling")
+  }
+}

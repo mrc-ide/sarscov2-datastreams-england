@@ -31,12 +31,15 @@ orderly2::orderly_artefact(
     "figs/infections_per_strain.png", "figs/pillar2_all_ages.png", "figs/pillar2_over25.png", "figs/prevalence_react.png", 
     "figs/prevalence_ons.png", "figs/Rt_eff_general.png", "figs/Rt_general.png", "figs/serology_euroimmun.png",
     "figs/serology_roche_n.png", "figs/status_effective_susceptible.png", "figs/status_infection.png", "figs/status_vaccine.png", "figs/variant_Wildtype_Alpha.png", "figs/variant_Alpha_Delta.png", "figs/variant_Delta_Omicron.png", "figs/mu_D.png", 
-    "figs/traceplot_east_of_england.png", "figs/traceplot_london.png", "figs/traceplot_midlands.png", "figs/traceplot_north_east_and_yorkshire.png", "figs/traceplot_north_west.png", "figs/traceplot_south_east.png", "figs/traceplot_south_west.png", "figs_by_age/pillar2_0_14.png","figs_by_age/pillar2_15_24.png", "figs_by_age/pillar2_25_49.png", "figs_by_age/pillar2_50_64.png", "figs_by_age/pillar2_65_79.png", 
+    "figs_by_age/pillar2_0_14.png","figs_by_age/pillar2_15_24.png", "figs_by_age/pillar2_25_49.png", "figs_by_age/pillar2_50_64.png", "figs_by_age/pillar2_65_79.png", 
     "figs_by_age/pillar2_80_plus.png", "figs_by_age/deaths_hosp_0_49.png", "figs_by_age/deaths_hosp_50_54.png", "figs_by_age/deaths_hosp_55_59.png", "figs_by_age/deaths_hosp_60_64.png", "figs_by_age/deaths_hosp_65_69.png", 
     "figs_by_age/deaths_hosp_70_74.png", "figs_by_age/deaths_hosp_75_79.png", "figs_by_age/deaths_hosp_80_plus.png", "figs_by_age/deaths_comm_0_49.png", 
     "figs_by_age/deaths_comm_50_54.png", "figs_by_age/deaths_comm_55_59.png", "figs_by_age/deaths_comm_60_64.png", "figs_by_age/deaths_comm_65_69.png", "figs_by_age/deaths_comm_70_74.png", "figs_by_age/deaths_comm_75_79.png", 
     "figs_by_age/deaths_comm_80_plus.png", "figs_by_age/admissions_0_9.png", "figs_by_age/admissions_10_19.png", "figs_by_age/admissions_20_29.png", "figs_by_age/admissions_30_39.png", "figs_by_age/admissions_40_49.png", "figs_by_age/admissions_50_59.png", "figs_by_age/admissions_60_69.png", "figs_by_age/admissions_70_79.png", "figs_by_age/admissions_80_plus.png", "figs_by_age/react_5_24.png", "figs_by_age/react_25_34.png", "figs_by_age/react_35_44.png", "figs_by_age/react_45_54.png", "figs_by_age/react_55_64.png", "figs_by_age/react_65_plus.png", "zoomed_view/regions.png", "zoomed_view/prevalence_ons.png", "zoomed_view/prevalence_react.png", "zoomed_view/pillar2_over25.png", 
     "paper_plots/suppl_compare_demography.png", "paper_plots/suppl_emergence_demography.png", "paper_plots/suppl_deaths_hosp_age.png", "paper_plots/suppl_deaths_comm_age.png", "paper_plots/suppl_hosp_adm_age.png", "paper_plots/suppl_inf_prev_age.png", "paper_plots/suppl_pillar2_age.png"))
+orderly2::orderly_artefact("traceplots",
+                           c(paste0("traceplots/traceplot_", sircovid::regions("england"), ".png"),
+                             "traceplots/adaptive_scaling.png"))
 #orderly2::orderly_artefact("regional fitting plots and projections for comparison","paper_plots/suppl_sev_winter_20_21.png","paper_plots/paper_figure_1.png", "paper_plots/paper_figure_2.png", "paper_plots/suppl_age_heatmaps.png", "paper_plots/suppl_compare_hfr.png", "paper_plots/suppl_regional_intrinsic.png", "paper_plots/suppl_admissions_vacc.png", "paper_plots/suppl_deaths_vacc.png")
 orderly2::orderly_artefact("Gelman-Rubin & ESS","outputs/diagnostics.rds")
 
@@ -79,6 +82,7 @@ dat <- spimalot::spim_combined_load("regional_results",
 
 dir.create("outputs", FALSE, TRUE)
 dir.create("figs", FALSE, TRUE)
+dir.create("traceplots", FALSE, TRUE)
 dir.create("figs_by_age", FALSE, TRUE)
 dir.create("zoomed_view", FALSE, TRUE)
 dir.create("thesis_plots", FALSE, TRUE)
@@ -127,10 +131,14 @@ par_labels <- forest_plot_labels(dat)
 
 ## Add traceplots
 for (r in sircovid::regions("england")) {
-  fig_name <- paste0("figs/traceplot_", r, ".png")
+  fig_name <- paste0("traceplots/traceplot_", r, ".png")
   write_png(fig_name, width = 3000, height = 1800, res = 200,
             plot_traceplots(dat$samples[[r]]))
 }
+
+write_png("traceplots/adaptive_scaling.png", 
+          width = 3000, height = 1800, res = 200,
+          plot_adaptive_scaling(dat))
 
 write_png("figs/forest_plot_variants.png", width = 1600, height = 1600, res = 200,
           spim_plot_forest(
