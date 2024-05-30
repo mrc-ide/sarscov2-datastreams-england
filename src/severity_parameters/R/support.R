@@ -1,11 +1,18 @@
-load_mcmc_parameters <- function(data_changed, deterministic, percent_removed) {
+load_mcmc_parameters <- function(deterministic, data_streams) {
 
-  message(sprintf("Parameters are for '%s' fit", data_changed))
+  #message(sprintf("Parameters are for '%s' fit", data_changed))
   message(sprintf("Model will be run in the '%s' mode",
                   if (deterministic) "deterministic" else "stochastic"))
   
-  path_pars <- file.path("pars", data_changed, percent_removed,
+  path_pars <- file.path("pars", 
+                         paste(as.character(data_streams * 1), collapse = ""),
                          if (deterministic) "deterministic" else "stochastic")
+  
+  if (!file.exists(path_pars)) {
+    path_pars <- file.path("pars",
+                           paste(rep("1", length(data_streams)), collapse = ""),
+                           if (deterministic) "deterministic" else "stochastic")
+  }
 
   info <- read_csv(file.path(path_pars, "info.csv"))
   ## "discrete" has been deprecated in mcstate and replaced by "integer"

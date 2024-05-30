@@ -1,4 +1,17 @@
-orderly2::orderly_parameters(region = "london", deterministic = TRUE, short_run = TRUE, data_changed = "original", percent_removed = 100)
+orderly2::orderly_parameters(region = "london", 
+                             deterministic = TRUE,
+                             short_run = TRUE,
+                             deaths_hosp = TRUE,
+                             deaths_comm = TRUE,
+                             icu = TRUE,
+                             general = TRUE,
+                             hosp = TRUE,
+                             admissions = TRUE,
+                             pillar2 = TRUE,
+                             ons = TRUE,
+                             react = TRUE,
+                             strain = TRUE,
+                             sero = TRUE)
 
 orderly2::orderly_shared_resource(global_util.R = "rtm_inference/util_new.R")
 
@@ -9,7 +22,18 @@ orderly2::orderly_dependency(
     "data/serology.csv" = "outputs/serology_for_inference.csv"))
 orderly2::orderly_dependency(
   "severity_parameters",
-  "latest(parameter:data_changed == this:data_changed && parameter:deterministic == this:deterministic && parameter:percent_removed == this:percent_removed)",
+  "latest(parameter:deterministic == this:deterministic && 
+          parameter:deaths_hosp == this:deaths_hosp && 
+          parameter:deaths_comm == this:deaths_comm && 
+          parameter:icu == this:icu && 
+          parameter:general == this:general && 
+          parameter:hosp == this:hosp &&
+          parameter:admissions == this:admissions &&
+          parameter:pillar2 == this:pillar2 &&
+          parameter:ons == this:ons &&
+          parameter:react == this:react &&
+          parameter:strain == this:strain &&
+          parameter:sero == this:sero)",
   c("parameters/base.rds" = "parameters_base.rds",
     "parameters/info.csv" = "parameters_info.csv",
     "parameters/prior.csv" = "parameters_prior.csv",
@@ -33,6 +57,18 @@ source("global_util.R")
 
 version_check("sircovid", "0.15.0")
 version_check("spimalot", "0.8.25")
+
+data_streams <- c(deaths_hosp = deaths_hosp,
+                  deaths_comm = deaths_comm,
+                  icu = icu,
+                  general = general,
+                  hosp = hosp,
+                  admissions = admissions,
+                  pillar2 = pillar2,
+                  ons = ons,
+                  react = react,
+                  strain = strain,
+                  sero = sero)
 
 date <- "2022-02-24"
 assumptions <- "central"
@@ -65,7 +101,7 @@ region <- spimalot::spim_check_region(region, multiregion = FALSE)
 
 pars <- spimalot::spim_fit_pars_load("parameters", region, assumptions,
                                      kernel_scaling)
-pars$data_changed <- data_changed
+pars$data_streams <- data_streams
 pars <- simplify_transform(pars, "parameters", date)
 
 ## Fix all unused parameters
@@ -90,7 +126,7 @@ data <- spim_data(
   date, region, data_rtm, data_serology, trim_deaths, trim_pillar2,
   adm_backfill_date, trim_pillar2_date, full_data = FALSE)
 
-data <- change_data(data, data_changed, percent_removed)
+data <- change_data(data, data_streams)
 
 filter <- spimalot::spim_particle_filter(data, pars$mcmc,
                                          control$particle_filter,

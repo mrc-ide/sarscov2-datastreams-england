@@ -1,4 +1,15 @@
-orderly2::orderly_parameters(data_changed = "original", deterministic = TRUE, percent_removed = 100)
+orderly2::orderly_parameters(deterministic = TRUE,
+                             deaths_hosp = TRUE,
+                             deaths_comm = TRUE,
+                             icu = TRUE,
+                             general = TRUE,
+                             hosp = TRUE,
+                             admissions = TRUE,
+                             pillar2 = TRUE,
+                             ons = TRUE,
+                             react = TRUE,
+                             strain = TRUE,
+                             sero = TRUE)
 
 orderly2::orderly_shared_resource(global_util.R = "rtm_inference/util_new.R")
 
@@ -58,9 +69,21 @@ assumptions <- "central"
 ## * early November 2021: omicron appears, rotate strains
 epoch_dates <- c("2020-09-17", "2020-12-07", "2021-03-08", "2021-09-14", "2021-11-01")
 
+data_streams <- c(deaths_hosp = deaths_hosp,
+                  deaths_comm = deaths_comm,
+                  icu = icu,
+                  general = general,
+                  hosp = hosp,
+                  admissions = admissions,
+                  pillar2 = pillar2,
+                  ons = ons,
+                  react = react,
+                  strain = strain,
+                  sero = sero)
+
 ## Load all parameters from the last run; creates priors, and updates
 ## new entries into the proposal matrix as needed.
-pars <- load_mcmc_parameters(data_changed, deterministic, percent_removed)
+pars <- load_mcmc_parameters(deterministic, data_streams)
 
 ## The baselines are always region-specific
 regions <- sircovid::regions("england")

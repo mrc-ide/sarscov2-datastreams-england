@@ -3,20 +3,19 @@ orderly2::orderly_run("severity_parsed_data")
 
 ## orderly parameter setup
 regions <- sircovid::regions("england")
-data_changed <- c("original", "deaths_hosp", "deaths_comm", "icu", "general",
-                  "hosp", "all_admission", "pillar2", "ons", "react", "strain",
-                  "sero")
-fit_grid <- expand.grid(regions, data_changed, stringsAsFactors = FALSE)
-names(fit_grid) <- c("r", "d")
-
-
-## 2. severity_parameters 
-for (d in data_changed) {
-  orderly2::orderly_run("severity_parameters", 
-                        parameters = list(deterministic = TRUE,
-                                          data_changed = d,
-                                          percent_removed = 100))
-}
+data_streams <- list(deaths_hosp = c(TRUE, FALSE),
+                     deaths_comm = c(TRUE, FALSE),
+                     icu = c(TRUE, FALSE),
+                     general = c(TRUE, FALSE),
+                     hosp = c(TRUE, FALSE),
+                     admissions = c(TRUE, FALSE),
+                     pillar2 = c(TRUE, FALSE),
+                     ons = c(TRUE, FALSE),
+                     react = c(TRUE, FALSE),
+                     strain = c(TRUE, FALSE),
+                     sero = c(TRUE, FALSE))
+fit_grid <- expand.grid(data_streams, stringsAsFactors = FALSE)
+fit_grid <- fit_grid[rowSums(!fit_grid) <= 3, ]
   
 
 ## ---------------------------
@@ -30,6 +29,25 @@ hipercow::hipercow_provision(method = "pkgdepends",
 
 `#----
 
+## 2. severity_parameters 
+parameters <- hipercow::task_create_bulk_expr(
+  orderly2::orderly_run("severity_parameters", 
+                        parameters = list(deterministic = TRUE,
+                                          deaths_hosp = deaths_hosp,
+                                          deaths_comm = deaths_comm,
+                                          icu = icu,
+                                          general = general,
+                                          hosp = hosp,
+                                          admissions = admissions,
+                                          pillar2 = pillar2,
+                                          ons = ons,
+                                          react = react,
+                                          strain = strain,
+                                          sero = sero)),
+  fit_grid,
+  resources = hipercow::hipercow_resources(queue = 'AllNodes',
+                                           cores = 1))
+
 ## 2. Short runs ----
 fits <- 
   hipercow::task_create_bulk_expr(
@@ -37,8 +55,17 @@ fits <-
                             parameters = list(region = r,
                                               short_run = TRUE,
                                               deterministic = TRUE,
-                                              data_changed = d,
-                                              percent_removed = 100)),
+                                              deaths_hosp = deaths_hosp,
+                                              deaths_comm = deaths_comm,
+                                              icu = icu,
+                                              general = general,
+                                              hosp = hosp,
+                                              admissions = admissions,
+                                              pillar2 = pillar2,
+                                              ons = ons,
+                                              react = react,
+                                              strain = strain,
+                                              sero = sero)),
     fit_grid,
     resources = hipercow::hipercow_resources(queue = 'AllNodes',
                                              cores = 8)

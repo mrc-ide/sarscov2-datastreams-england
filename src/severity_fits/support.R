@@ -114,39 +114,40 @@ add_full_proposal <- function(dat, pars) {
   dat
 }
 
-change_data <- function(data, data_changed, percent_removed) {
-  if (data_changed == "original") {
-    return(data)
-  } else if (data_changed == "deaths_hosp") {
-    change_cols <- grep("^deaths_hosp", names(data), value = TRUE)
-  } else if (data_changed == "deaths_comm") {
-    change_cols <- grep("^deaths_comm", names(data), value = TRUE)
-  } else if (data_changed == "icu") {
-    change_cols <- "icu"
-  } else if (data_changed == "general") {
-    change_cols <- "general"
-  } else if (data_changed == "hosp") {
-    change_cols <- "hosp"
-  } else if (data_changed == "all_admission") {
-    change_cols <- grep("^all_admission", names(data), value = TRUE)
-  } else if (data_changed == "pillar2") {
-    change_cols <- grep("^pillar2", names(data), value = TRUE)
-  } else if (data_changed == "ons") {
-    change_cols <- grep("^ons", names(data), value = TRUE)
-  } else if (data_changed == "react") {
-    change_cols <- grep("^react", names(data), value = TRUE)
-  } else if (data_changed == "strain") {
-    change_cols <- grep("^strain", names(data), value = TRUE)
-  } else if (data_changed == "sero") {
-    change_cols <- grep("^sero", names(data), value = TRUE)
-  } else{
-    stop("Please check the name of the data stream")
+change_data <- function(data, data_streams) {
+
+  get_remove_cols <- function(x) {
+    if (x == "deaths_hosp") {
+      change_cols <- grep("^deaths_hosp", names(data), value = TRUE)
+    } else if (x == "deaths_comm") {
+      change_cols <- grep("^deaths_comm", names(data), value = TRUE)
+    } else if (x == "icu") {
+      change_cols <- "icu"
+    } else if (x == "general") {
+      change_cols <- "general"
+    } else if (x == "hosp") {
+      change_cols <- "hosp"
+    } else if (x == "admissions") {
+      change_cols <- grep("^all_admission", names(data), value = TRUE)
+    } else if (x == "pillar2") {
+      change_cols <- grep("^pillar2", names(data), value = TRUE)
+    } else if (x == "ons") {
+      change_cols <- grep("^ons", names(data), value = TRUE)
+    } else if (x == "react") {
+      change_cols <- grep("^react", names(data), value = TRUE)
+    } else if (x == "strain") {
+      change_cols <- grep("^strain", names(data), value = TRUE)
+    } else if (x == "sero") {
+      change_cols <- grep("^sero", names(data), value = TRUE)
+    } else{
+      stop("Please check the name of the data stream")
+    }  
   }
   
-  index <- which(rowSums(!is.na(data[, change_cols, drop = FALSE])) > 0)
-  index_na <- 
-    sample(index, round(length(index) * percent_removed / 100), replace = FALSE)
-  data[index_na, change_cols] <- NA
+  remove_cols <-  
+    unlist(lapply(names(data_streams)[!data_streams], get_remove_cols))
+  
+  data[, remove_cols] <- NA
 
   data
 }
