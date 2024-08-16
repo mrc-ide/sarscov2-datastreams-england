@@ -13,6 +13,15 @@ options(width = 80)
 Gelman-Rubin and ESS convergence diagnostics from full chains:
 
 ```{r, echo = FALSE}
-print(dat$diagnostics)
-#print(dat2$diagnostics)
+
+get_conv_dx <- function(x) {
+  data_removed <- paste(names(x$data_streams)[!x$data_streams], collapse = ", ")
+  if (all(x$data_streams)) {
+    data_removed <- "none"
+  }
+  cbind(data_removed, x$convergence_diagnostics)
+}
+conv_dx <- lapply(dat, get_conv_dx)
+conv_dx <- dplyr::bind_rows(conv_dx)
+print(conv_dx)
 ```

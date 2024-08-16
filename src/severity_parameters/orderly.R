@@ -9,7 +9,14 @@ orderly2::orderly_parameters(deterministic = TRUE,
                              ons = TRUE,
                              react = TRUE,
                              strain = TRUE,
-                             sero = TRUE)
+                             sero = TRUE,
+                             east_of_england = FALSE,
+                             london = FALSE,
+                             midlands = FALSE,
+                             north_east_and_yorkshire = FALSE,
+                             north_west = FALSE,
+                             south_east = FALSE,
+                             south_west = FALSE)
 
 orderly2::orderly_shared_resource(global_util.R = "rtm_inference/util_new.R")
 
@@ -81,12 +88,22 @@ data_streams <- c(deaths_hosp = deaths_hosp,
                   strain = strain,
                   sero = sero)
 
+## The baselines are always region-specific
+regions_included <- c(east_of_england = east_of_england,
+                      london = london,
+                      midlands = midlands,
+                      north_east_and_yorkshire = north_east_and_yorkshire,
+                      north_west = north_west,
+                      south_east = south_east,
+                      south_west = south_west)
+regions <- names(regions_included[regions_included])
+if (length(regions) == 0) {
+  stop("Must include at least one region!")
+}
+
 ## Load all parameters from the last run; creates priors, and updates
 ## new entries into the proposal matrix as needed.
 pars <- load_mcmc_parameters(deterministic, data_streams)
-
-## The baselines are always region-specific
-regions <- sircovid::regions("england")
 
 baseline <- lapply(regions, create_baseline,
                    date, NULL, # setting restart_date to NULL

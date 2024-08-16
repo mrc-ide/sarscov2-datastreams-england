@@ -33,6 +33,7 @@ hipercow::hipercow_provision(method = "pkgdepends",
 parameters <- hipercow::task_create_bulk_expr(
   orderly2::orderly_run("severity_parameters", 
                         parameters = list(deterministic = TRUE,
+                                          north_west = TRUE,
                                           deaths_hosp = deaths_hosp,
                                           deaths_comm = deaths_comm,
                                           icu = icu,
@@ -44,7 +45,7 @@ parameters <- hipercow::task_create_bulk_expr(
                                           react = react,
                                           strain = strain,
                                           sero = sero)),
-  fit_grid,
+  fit_grid[-1L, ],
   resources = hipercow::hipercow_resources(queue = 'AllNodes',
                                            cores = 1))
 
@@ -52,7 +53,7 @@ parameters <- hipercow::task_create_bulk_expr(
 fits <- 
   hipercow::task_create_bulk_expr(
       orderly2::orderly_run('severity_fits',
-                            parameters = list(region = r,
+                            parameters = list(region = "north_west",
                                               short_run = TRUE,
                                               deterministic = TRUE,
                                               deaths_hosp = deaths_hosp,
@@ -68,7 +69,7 @@ fits <-
                                               sero = sero)),
     fit_grid,
     resources = hipercow::hipercow_resources(queue = 'AllNodes',
-                                             cores = 8)
+                                             cores = 4)
   )
 
 ## Collect results

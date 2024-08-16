@@ -272,26 +272,6 @@ plot_parameters_heatmap <- function(dat, regions) {
   }
 }
 
-calc_KL_from_sample <- function(reference, changed) {
-  density_reference <- density(reference)
-  density_changed <- density(changed)
-  
-  common_support <- sort(union(density_reference$x, density_changed$x))
-  
-  interp <- function(dens) {
-    z <- approx(dens$x, dens$y, xout = common_support, method = 'linear')$y
-    z[is.na(z)] <- 0
-    z / sum(z)
-  }
-  
-  interp_reference <- interp(density_reference)
-  interp_changed <- interp(density_changed)
-  
-  X <- rbind(interp_reference, interp_changed)
-  
-  suppressMessages(unname(philentropy::KL(X)))
-}
-
 region_to_title <- function(region) {
   titles <- list(east_of_england = "East of England",
                  london = "London",

@@ -151,3 +151,73 @@ change_data <- function(data, data_streams) {
 
   data
 }
+
+get_metrics <- function(fit) {
+  
+  variant_names <- names(fit$parameters$base$strain_epochs)
+  pars <- fit$samples$pars
+  
+  R0_variants <- list()
+  
+  for (nm in variant_names) {
+    if (nm == "Wildtype") {
+      R0 <- fit$rt$Rt_general[1, "weighted", ]
+    } else {
+      R0 <- R0 * pars[, paste0("ta_", tolower(nm))]
+    }
+    R0_variants[[nm]] <- R0
+  }
+  
+  i <- which(fit$intrinsic_severity$period == "Emergence3")
+  get_intrinsic_severity <- function(x, what) {
+    out <- lapply(x$variant, 
+                  function(v) {
+                    j <- which(x$variant == v)
+                    x[[what]][i, j, ]})
+    names(out) <- x$variant
+    out
+  }
+  
+  intrinsic_ifr <- get_intrinsic_severity(fit$intrinsic_severity, "IFR")
+  intrinsic_ihr <- get_intrinsic_severity(fit$intrinsic_severity, "IHR")
+  intrinsic_hfr <- get_intrinsic_severity(fit$intrinsic_severity, "HFR")
+
+  list(r0 = R0_variants,
+       intrinsic_ifr = intrinsic_ifr,
+       intrinsic_ihr = intrinsic_ihr,
+       intrinsic_hfr = intrinsic_hfr)
+}
+
+get_convergence_diagnostic <- function(fit) {
+  
+  sample <- fit$samples
+  
+  n_full_pars <- nrow(sample$pars_full)
+  n_chains <- max(sample$chain)
+  
+  sample$chain_full <- rep(seq_len(n_chains), each = n_full_pars / n_chains)
+  
+  chains <- unname(split(data.frame(sample$pars_full), sample$chain_full))
+  chains <- lapply(chains, coda::as.mcmc)
+  
+  rhat <- tryCatch(coda::gelman.diag(chains), error = function(e) NULL)
+  if (!is.null(rhat)) {
+    rhat <- round(max(rhat$psrf[, "Point est."]), 2)
+  } else {
+    rhat <- NA_real_
+  }
+  
+  ess <- function(p) {
+    traces <- matrix(p, ncol = n_chains)
+    sum(coda::effectiveSize(coda::as.mcmc(traces)))
+  }
+  
+  pars <- sample$pars_full
+  nms <- colnames(pars)
+  pars_ess <- lapply(nms, function (nm) {
+    ess(pars[, nm])
+  })
+  pars_ess <- round(min(unlist(pars_ess)))
+  
+  data.frame(rhat, pars_ess)
+}

@@ -42,7 +42,12 @@ orderly2::orderly_dependency(
 
 orderly2::orderly_artefact("pMCMC trace plots", "outputs/pmcmc_traceplots.pdf")
 orderly2::orderly_artefact("pMCMC trace plots multipage", "outputs/pmcmc_traceplots_separate.pdf")
-orderly2::orderly_artefact("PMCMC results for combined task", "outputs/fit.rds")
+orderly2::orderly_artefact("PMCMC results for combined task", 
+                           c("outputs/fit.rds",
+                             "outputs/info.csv",
+                             "outputs/proposal.csv",
+                             "outputs/metrics.rds",
+                             "outputs/convergence_diagnostics.rds"))
 
 library(sircovid)
 library(spimalot)
@@ -84,7 +89,7 @@ if (deterministic) {
   burnin <- if (short_run) 1 else 5000
   n_mcmc <- 30000
   n_sample <- 1000
-  chains <- 8
+  chains <- 4
   kernel_scaling <- 0.1
   adaptive_proposal <- 
     mcstate::adaptive_proposal_control(initial_vcv_weight = 100)
@@ -156,9 +161,15 @@ dat <- spimalot::spim_fit_process(samples, pars, data_inputs,
                                   control$particle_filter)
 dat <- add_full_proposal(dat, pars)
 dat$fit$samples$info$burnin <- burnin
+metrics <- get_metrics(dat$fit)
+convergence_diagnostics <- get_convergence_diagnostic(dat$fit)
 
 dir.create("outputs", FALSE, TRUE)
 saveRDS(dat$fit, "outputs/fit.rds")
+saveRDS(metrics, "outputs/metrics.rds")
+saveRDS(convergence_diagnostics, "outputs/convergence_diagnostics.rds")
+write_csv(dat$fit$parameters$info, "outputs/info.csv")
+write_csv(dat$fit$parameters$proposal, "outputs/proposal.csv")
 
 message("Creating plots")
 write_pdf(
